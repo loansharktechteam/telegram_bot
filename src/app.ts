@@ -12,8 +12,8 @@ import {telegramBotService} from './services/telegramBotService'
 import {checkTrigger} from './services/cronJobService'
 
 const app: Application = express()
-const port: number = 8080
-const httpsPort: number = 8443
+const port: number = 8081
+const httpsPort: number = 8444
 app.use(cors({
     origin: '*'
 }));
