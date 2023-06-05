@@ -7,6 +7,7 @@ import bodyParser from "body-parser";
 import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
+import {telegramBotService} from './services/telegramBotService'
 
 const app: Application = express()
 const port: number = 8080
@@ -39,7 +40,8 @@ app.get("/toto", (req: Request, res: Response) => {
     res.send("Hello toto")
 })
 
-app.use('/telegram',telegramRouter)
+// app.use('/telegram',telegramRouter)
+
 // app.use('/email', emailRouter);
 // app.use('/discord', discordRouter);
 // app.use('/workflow', workflowRouter);
@@ -48,7 +50,7 @@ app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
 })
 
-
+telegramBotService()
 // const httpsServer = https.createServer(cred, app)
 // httpsServer.listen(httpsPort)
 // console.log(`https App is listening on port ${httpsPort} !`)
