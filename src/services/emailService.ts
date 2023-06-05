@@ -83,6 +83,7 @@ const message = "Hi there, you were emailed me through nodemailer"
 
 
 export async function sendEmail(toList:string,ccList:string){
+  console.log(`send email `,toList)
     const options = {
         from: "TESTING <sender@gmail.com>", // sender address
         to: toList, //"tyehcwc402004@gmail.com;tyehcwc12@gmail.com", // receiver email

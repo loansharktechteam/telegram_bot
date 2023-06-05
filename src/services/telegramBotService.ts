@@ -59,6 +59,36 @@ async function removeSubscribe(username: any, chatId: any) {
     }
 }
 
+// async function getSubscribByUsername(username:string){
+//     let body = {
+//         username
+//     }
+//     try {
+//         const saveRespond = await TelegramMapping.findOne(username)
+//         console.log(saveRespond)
+//         if(saveRespond.deletedCount>0){
+//             return {
+//                 code: 0,
+//                 message: "success",
+//                 result: saveRespond
+//             }
+//         }else{
+//             return {
+//                 code: -1,
+//                 message: "No Subscribe record found",
+//                 result: saveRespond
+//             }
+//         }
+//     }
+//     catch (e) {
+//         return {
+//             code: -2,
+//             message: "fail",
+//             result: {}
+//         }
+//     }
+// }
+
 export function telegramBotService() {
 
     bot.onText(/\/startsubscribe/, async function (msg) {

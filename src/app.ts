@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from "express"
+import CronJob from 'cron'
 import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
@@ -8,6 +9,7 @@ import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
 import {telegramBotService} from './services/telegramBotService'
+import {checkTrigger} from './services/cronJobService'
 
 const app: Application = express()
 const port: number = 8080
@@ -40,8 +42,11 @@ app.get("/toto", (req: Request, res: Response) => {
     res.send("Hello toto")
 })
 
-// app.use('/telegram',telegramRouter)
+// app.use('telegram',tele)
 
+app.use('/telegram',telegramRouter)
+
+app.get('/testTriggerCronJob',checkTrigger)
 // app.use('/email', emailRouter);
 // app.use('/discord', discordRouter);
 // app.use('/workflow', workflowRouter);
@@ -51,6 +56,17 @@ app.listen(port, function () {
 })
 
 telegramBotService()
+
+
+const job = new CronJob.CronJob("*/5 * * * * *",function (){
+    // checkTrigger()
+})
+
+job.start()
+
+
+
+
 // const httpsServer = https.createServer(cred, app)
 // httpsServer.listen(httpsPort)
 // console.log(`https App is listening on port ${httpsPort} !`)
