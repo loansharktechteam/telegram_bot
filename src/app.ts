@@ -58,6 +58,10 @@ app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
 })
 
+const httpsServer = https.createServer(cred, app)
+httpsServer.listen(httpsPort)
+console.log(`https App is listening on port ${httpsPort} !`)
+
 telegramBotService()
 
 
@@ -67,9 +71,7 @@ const job = new CronJob.CronJob("*/5 * * * * *",function (){
 
 job.start()
 
-const httpsServer = https.createServer(cred, app)
-httpsServer.listen(httpsPort)
-console.log(`https App is listening on port ${httpsPort} !`)
+
 
 
 // import TelegramBot from 'node-telegram-bot-api'
