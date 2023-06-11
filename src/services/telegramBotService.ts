@@ -4,7 +4,7 @@ import TelegramBot from 'node-telegram-bot-api'
 // import { Employee } from '../modal/employeeModel';
 import { TelegramMapping } from '../modal/telegramMappingModal'
 const token = process.env.TELEGRAM_TOKEN
-const bot = new TelegramBot(token ? token : '', { polling: true });
+export const bot = new TelegramBot(token ? token : '', { polling: true });
 
 
 async function addSubscribe(address: any, username: any, chatId: any) {

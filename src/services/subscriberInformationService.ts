@@ -3,9 +3,7 @@ import TelegramBot from 'node-telegram-bot-api'
 // import {Test} from '../modal/testModal';
 // import { Employee } from '../modal/employeeModel';
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
-
-const token = process.env.TELEGRAM_TOKEN
-const bot = new TelegramBot(token ? token : '', { polling: true });
+import { bot } from '../services/telegramBotService'
 
 export class SubscriberInformationService {
     constructor() { }

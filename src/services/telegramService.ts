@@ -2,9 +2,7 @@ import TelegramBot from 'node-telegram-bot-api'
 import { TelegramMapping }from '../modal/telegramMappingModal'
 import {Test} from '../modal/testModal';
 import { Employee } from '../modal/employeeModel';
-
-const token = process.env.TELEGRAM_TOKEN
-const bot = new TelegramBot(token?token:'', {polling: true});
+import { bot } from '../services/telegramBotService'
 
 async function getChatIdByUsername(username:string){
     try{

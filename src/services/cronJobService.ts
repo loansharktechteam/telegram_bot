@@ -6,9 +6,7 @@ import { Employee } from '../modal/employeeModel';
 import { EmailMapping } from '../modal/emailMappingModal'
 import { sendMessageByUsername } from '../services/telegramService'
 import { sendEmail } from '../services/emailService'
-
-const token = process.env.TELEGRAM_TOKEN
-const bot = new TelegramBot(token ? token : '', { polling: true });
+import { bot } from '../services/telegramBotService'
 
 // async function getChatIdByUsername(username:string){
 //     try{

@@ -9,6 +9,7 @@ import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
 import workflowRouter from './router/workflowRouter';
+import subscriberInformationRouter from './router/subscriberInformationRouter'
 import {telegramBotService} from './services/telegramBotService'
 import {checkTrigger} from './services/cronJobService'
 
@@ -47,6 +48,7 @@ app.get("/toto", (req: Request, res: Response) => {
 
 app.use('/workflowService',workflowRouter)
 app.use('/telegram',telegramRouter)
+app.use('/noitifcation',subscriberInformationRouter)
 
 app.get('/testTriggerCronJob',checkTrigger)
 // app.use('/email', emailRouter);
