@@ -106,7 +106,7 @@ export async function checkTrigger() {
             if (checkSubscriptedNoitifcationResult?.result[i].alertSubscripte.telegram === true) {
                 let telgramResult = await getTelegramUserByWalletAddress(address)
                 console.log(telgramResult)
-                let senmsgResult = await sendMessageByUsername(telgramResult.result.username, "this is trigger alert")
+                let senmsgResult = await sendMessageByUsername(telgramResult.result.username,'' , "this is trigger alert")
                 console.log(`send tg msg`)
             }
             if (checkSubscriptedNoitifcationResult?.result[i].alertSubscripte.email === true) {

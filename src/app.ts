@@ -8,6 +8,7 @@ import bodyParser from "body-parser";
 import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
+import workflowRouter from './router/workflowRouter';
 import {telegramBotService} from './services/telegramBotService'
 import {checkTrigger} from './services/cronJobService'
 
@@ -44,6 +45,7 @@ app.get("/toto", (req: Request, res: Response) => {
 
 // app.use('telegram',tele)
 
+app.use('/workflowService',workflowRouter)
 app.use('/telegram',telegramRouter)
 
 app.get('/testTriggerCronJob',checkTrigger)

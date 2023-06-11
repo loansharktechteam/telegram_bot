@@ -47,6 +47,12 @@ router.post('/deleteWorkflowByKey', async function (req: Request, res: Response)
     }    
 });
 
+router.post('/addSubscriptedNotification', function (req: Request, res: Response) {
+    const {address, telegramNotification,emailNotification,discordNotification} = req.body
+    WorkflowServices.addSubscriptedNotification(address, telegramNotification,emailNotification,discordNotification);
+    res.status(200).json({message:"success"})
+})
+
 router.post('/trypost', function (req: Request, res: Response) {
     WorkflowServices.trypost();
     res.status(200).json({message:"success"})

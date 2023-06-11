@@ -1,6 +1,7 @@
 import { Workflow }from '../modal/workflowModal'
 import {Test} from '../modal/testModal';
 import { Employee } from '../modal/employeeModel';
+import { SubscriptedNoitifcations } from '../modal/subscriptedNoitifcationsModal'
 
 export async function getWorkflowByAddress(address:String){
     try{
@@ -88,6 +89,22 @@ export async function trypost(){
         console.log(e)
     }
     return 
+}
+
+
+export async function addSubscriptedNotification(address:string,telegramNotification:boolean,emailNotification:boolean,discordNotification:boolean){
+    
+    // address:string,telegramNotification:boolean,emailNotification:boolean,discordNotification:boolean
+    let body={address:address}
+    const subscriptedResult = await SubscriptedNoitifcations.find(body);
+    console.log(subscriptedResult)
+    if(subscriptedResult===null){
+        //create new
+    }else{
+        //update
+        
+    }
+
 }
 // default export class workflowServices(){
    

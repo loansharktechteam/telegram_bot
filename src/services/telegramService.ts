@@ -24,9 +24,9 @@ function addNewUser(){
 
 }
 
-export async function sendMessageByUsername(username:any,message:any){
+export async function sendMessageByUsername(username:any,chatId:any,message:any){
     try{
-        let chatId =await getChatIdByUsername(username)
+        // let chatId =await getChatIdByUsername(username)
         let result  = await bot.sendMessage(chatId,message)
         if(result.message_id){
             return {
