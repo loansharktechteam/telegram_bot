@@ -46,7 +46,7 @@ app.get("/toto", (req: Request, res: Response) => {
 
 // app.use('telegram',tele)
 
-app.use('/workflowService',workflowRouter)
+app.use('/workflow',workflowRouter)
 app.use('/telegram',telegramRouter)
 app.use('/noitifcation',subscriberInformationRouter)
 
