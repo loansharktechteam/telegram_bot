@@ -22,14 +22,13 @@ app.use(cors({
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-// console.log(__dirname )
-// const key=fs.readFileSync(`${__dirname}/private.key`)
-// const cert=fs.readFileSync(`${__dirname}/certificate.crt`)
+const key=fs.readFileSync(`${__dirname}/private.key`)
+const cert=fs.readFileSync(`${__dirname}/certificate.crt`)
 
-// const cred = {
-//     key,
-//     cert
-// }
+const cred = {
+    key,
+    cert
+}
 if (process.env.DATABASE_URL) {
     console.log(`${process.env.DATABASE_URL}`)
     mongoose.connect(`${process.env.DATABASE_URL}`)
@@ -68,13 +67,9 @@ const job = new CronJob.CronJob("*/5 * * * * *",function (){
 
 job.start()
 
-
-
-
-// const httpsServer = https.createServer(cred, app)
-// httpsServer.listen(httpsPort)
-// console.log(`https App is listening on port ${httpsPort} !`)
-
+const httpsServer = https.createServer(cred, app)
+httpsServer.listen(httpsPort)
+console.log(`https App is listening on port ${httpsPort} !`)
 
 
 // import TelegramBot from 'node-telegram-bot-api'
