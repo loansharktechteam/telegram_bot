@@ -16,6 +16,14 @@ export class SubscriberInformationService {
         return saveRespond
     }
 
+    getSubscriberInformationByKey = async (key: string) => {
+        let body = {
+            key
+        }
+        const saveRespond = await SubscriberInformation.findOne(body);
+        return saveRespond
+    }
+
     addSubscriberInformation = async (subscriberInformation: any) => {
         try {
             const saveRespond = await SubscriberInformation.create(subscriberInformation);

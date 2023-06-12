@@ -26,6 +26,25 @@ router.post('/addSubscriberInformation', async function (req: Request, res: Resp
     }
 });
 
+router.post('/getSubscriberInformationByKey', async function (req: Request, res: Response) {
+    //   console.log(req, res)
+    const { key } = req.body
+    try {
+        const result = await subscriberInformationService.getSubscriberInformationByKey(key);
+        if (result.code === 0) {
+            res.status(200).json(result)
+        } else {
+            res.status(503).json(result)
+        }
+    } catch (e) {
+        res.status(404).json({
+            code: -2,
+            message: `fail ${e}`,
+            result: {}
+        })
+    }
+});
+
 // router.post('/saveWorkflows', async function (req: Request, res: Response) {
 //     //   console.log(req, res)
 //     // const { body } = req.body
