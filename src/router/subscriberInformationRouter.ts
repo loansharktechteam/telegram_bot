@@ -31,12 +31,13 @@ router.post('/getSubscriberInformationByKey', async function (req: Request, res:
     const { key } = req.body
     try {
         const result = await subscriberInformationService.getSubscriberInformationByKey(key);
-        if (result.code === 0) {
+        if(result){
             res.status(200).json(result)
-        } else {
+        }else{
             res.status(503).json(result)
         }
     } catch (e) {
+        console.error(e)
         res.status(404).json({
             code: -2,
             message: `fail ${e}`,
