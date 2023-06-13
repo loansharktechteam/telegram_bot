@@ -24,6 +24,12 @@ export class SubscriberInformationService {
         return saveRespond
     }
 
+    getSubscriberInformation = async (reqestBody: any) => {
+        const saveRespond = await SubscriberInformation.findOne(reqestBody);
+        return saveRespond
+    }
+
+
     addSubscriberInformation = async (subscriberInformation: any) => {
         try {
             const saveRespond = await SubscriberInformation.create(subscriberInformation);
@@ -40,6 +46,38 @@ export class SubscriberInformationService {
                 message: "fail",
                 result: {}
             }
+        }
+    }
+
+    updateSubscriberInformation = async (subscriberInformation: any) => {
+        try {
+            console.log(subscriberInformation)
+            const saveRespond = await SubscriberInformation.updateOne(subscriberInformation)
+            console.log(saveRespond)
+            return {
+                code: 0,
+                message: "success",
+                result: saveRespond
+            }
+        }
+        catch (e) {
+            console.error(e)
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
+
+    updateSubscriberTgChatIdByUsername = async (chatId: string, username: string) => {
+        console.log(chatId, username)
+        let requestBody = {"notification.telegram.username":username}
+        let result = await this.getSubscriberInformation(requestBody)
+        if (result.notification.telegram.chatId) {
+            result.notification.telegram.chatId=chatId
+            result = await  this.updateSubscriberInformation(result)
+            return result
         }
     }
 
