@@ -11,7 +11,10 @@ import telegramRouter from './router/telegramRouter';
 import workflowRouter from './router/workflowRouter';
 import subscriberInformationRouter from './router/subscriberInformationRouter'
 import {telegramBotService} from './services/telegramBotService'
-import {checkTrigger} from './services/cronJobService'
+import {
+    checkTrigger,
+    triggerLiquidationAlert,
+} from './services/cronJobService'
 
 const app: Application = express()
 const port: number = 8080
@@ -49,7 +52,9 @@ app.use('/workflow',workflowRouter)
 app.use('/telegram',telegramRouter)
 app.use('/noitifcation',subscriberInformationRouter)
 
-app.get('/testTriggerCronJob',checkTrigger)
+// app.get('/testTriggerCronJob',checkTrigger)
+app.get('/testTriggerCronJob',triggerLiquidationAlert)
+
 // app.use('/email', emailRouter);
 // app.use('/discord', discordRouter);
 // app.use('/workflow', workflowRouter);

@@ -95,8 +95,8 @@ export async function sendEmail(toList:string,ccList:string){
     
     try{
         const result = await triggerSendEmail(options,(info:any)=>{
-            console.log("Email sent successfully");
-            console.log("MESSAGE ID: ", info.messageId);
+            // console.log("Email sent successfully");
+            // console.log("MESSAGE ID: ", info.messageId);
         })
         console.log(`result: `,result)
     }catch(e){

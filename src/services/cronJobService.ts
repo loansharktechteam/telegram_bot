@@ -7,7 +7,7 @@ import { EmailMapping } from '../modal/emailMappingModal'
 import { sendMessageByUsername } from '../services/telegramService'
 import { sendEmail } from '../services/emailService'
 import { bot } from '../services/telegramBotService'
-
+import { SubscriberInformation } from '../modal/subscriberInformationModal'
 // async function getChatIdByUsername(username:string){
 //     try{
 //         const result = await TelegramMapping.findOne({username:username});
@@ -120,4 +120,60 @@ export async function checkTrigger() {
 
         }
     }
+}
+
+
+
+async function getAllBorrowLimitOverCondition() {
+    console.log(`getAllBorrowLimitOverCondition`)
+    let body = {condition:{$elemMatch:{condition:"borrowLimitOver"}},status:"on"}
+    // let body = {condition:{$elemMatch:{condition:"abcd"}}}
+    try {
+        const saveRespond = await SubscriberInformation.find(body);
+        return {
+            code: 0,
+            message: "success",
+            result: saveRespond
+        }
+    }
+    catch (e) {
+        console.error(e)
+        return {
+            code: -1,
+            message: "fail",
+            result: []
+        }
+    }
+}
+
+async function checkEachSubscribedCondition(eachSubscribeInformation:any){
+    console.log(`checkEachSubscribedCondition`,eachSubscribeInformation)
+    //.. check condition
+
+    //send alert
+    // eachSubscribeInformation.
+    if(eachSubscribeInformation.notification.email.status==='on'){
+        let sendEmailResult = await sendEmail(eachSubscribeInformation.notification.email.toList,eachSubscribeInformation.notification.email.ccList)
+        console.log(`sent email`)
+    }
+    if(eachSubscribeInformation.notification.telegram.status==='on'){
+        let senmsgResult = await sendMessageByUsername('',eachSubscribeInformation.notification.telegram.chatId, "this is trigger alert")
+        console.log(`send tg msg`)
+    }
+    if(eachSubscribeInformation.notification.discord.status==='on'){
+        // let senmsgResult = await sendMessageByUsername('',eachSubscribeInformation.notification.telegram.chatId, "this is trigger alert")
+        // console.log(`send tg msg`)
+    }
+}
+
+export async function triggerLiquidationAlert(){
+    const result = await getAllBorrowLimitOverCondition()
+    if(result.result.length>0){
+        //someone subscribe
+        for(let count=0; count < result.result.length;count++){
+            checkEachSubscribedCondition(result.result[count])
+        }
+    }
+    
+    return 
 }
