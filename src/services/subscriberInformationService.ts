@@ -25,7 +25,7 @@ export class SubscriberInformationService {
     }
 
     getSubscriberInformation = async (reqestBody: any) => {
-        const saveRespond = await SubscriberInformation.findOne(reqestBody);
+        const saveRespond = await SubscriberInformation.find(reqestBody);
         return saveRespond
     }
 
@@ -74,10 +74,34 @@ export class SubscriberInformationService {
         console.log(chatId, username)
         let requestBody = {"notification.telegram.username":username}
         let result = await this.getSubscriberInformation(requestBody)
-        if (result.notification.telegram.chatId) {
-            result.notification.telegram.chatId=chatId
-            result = await  this.updateSubscriberInformation(result)
-            return result
+        let successCount = 0
+        let failCount = 0
+        console.log(`got subscribe`,result)
+        if(result.length>0){
+            for(let i=0;i<result.length;i++){
+                console.log(result[i])
+                console.log(`83`,result[i].notification.telegram.chatId)
+                if ((result[i]?.notification?.telegram?.chatId??null)!==null) {
+                    result[i].notification.telegram.chatId=chatId
+                    console.log(`got subscribe456`,result[i])
+                    let result2 = await this.updateSubscriberInformation(result[i])
+                    console.log(`got subscribe123`,result2)
+                    if(result2){
+                        successCount = successCount+1
+                    }else{
+                        failCount = failCount+1
+                    }
+                }
+            }
+        }
+        if(failCount>0){
+            return {
+                message:'fail',
+            }
+        }else{
+            return {
+                message:'success',
+            }
         }
     }
 

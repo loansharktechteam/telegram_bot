@@ -105,7 +105,8 @@ export function telegramBotService() {
             bot.onReplyToMessage(res.chat.id, res.message_id, async function (msg) {
                 //call api to add
                 let result = await subscriberInformationService.updateSubscriberTgChatIdByUsername(chatId.toString(),username)
-                if((result?.notification?.telegram?.chatId??'')!==''){
+                
+                if(result.message==='success'){
                     bot.sendMessage(chatId, 'success register')
                 }else{
                     bot.sendMessage(chatId, 'fail to register. please seek help in discord')

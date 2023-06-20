@@ -16,7 +16,7 @@ const SubscriberInformationSchema: Schema = new Schema({
     key: { type: String, require: true },
     address: { type: String, require: true },
     status: { type: String, require: true },
-    condition: [{ type: String} ],
+    condition: [{ type: Object} ],
     notification:{
         telegram: { 
             status:{type: String},
