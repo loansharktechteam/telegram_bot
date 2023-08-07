@@ -25,6 +25,7 @@ import { sendEmail } from '../services/emailService'
 import { bot } from '../services/telegramBotService'
 import { sendDiscordMessageByUsername } from '../services/discordService'
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
+import { AlertHistoryService } from '../services/alertHistoryService'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
 const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
@@ -53,6 +54,7 @@ export class CronJobService {
         // super();
     }
 
+    alertHistoryService = new AlertHistoryService()
     checkSubscriptedNoitifcation = async () => {
         console.log(`checkSubscriptedNoitifcation`)
         let body = { "alertSubscripte.telegram": true }
@@ -217,10 +219,19 @@ export class CronJobService {
             let sendDiscordMessageResult = await sendDiscordMessageByUsername(eachSubscribeInformation.notification.discord.clientId, "this is trigger alert")
             console.log(`send discord msg`)
         }
+        //write history for not trigger again within 24hrs
+        let obj = {
+            address: eachSubscribeInformation.address,
+            condition: 'borrowLimitOver',
+            createDate: new Date()
+        }
+        await this.alertHistoryService.addAlertHistoryService(obj)
+        // let result = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition('borrowLimitOver')
+        // console.log(result)
         return
     }
 
-    triggerLiquidationAlert = async (req:any,res:any) => {
+    triggerLiquidationAlert = async (req: any, res: any) => {
         // console.log(this)
         const result = await this.getAllBorrowLimitOverCondition()
         if (result.result.length > 0) {
@@ -231,6 +242,7 @@ export class CronJobService {
                 eachSubscription.condition.map(async (eachCondition: any) => {
                     if (eachCondition.condition === 'borrowLimitOver') {
                         let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value)
+                        console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
                         if (checkAlertNeedTriggerResult === true) {
                             //if triggered alert send alert
                             console.log(`trigger alert`)
@@ -240,11 +252,18 @@ export class CronJobService {
                 })
             }
         }
-        res.status(200).json({message:"OK"})
+        res.status(200).json({ message: "OK" })
         return
     }
 
     checkAlertNeedTrigger = async (address: any, alertThreshold: any) => {
+
+        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver')
+        console.log(pass24HoursHistory)
+        pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
+        if (pass24HoursHistory.length <= 0) return false
+
+
         const div18zero = 1000000000000000000
         // let liquidationAddressCheck = `0x24DE9902d6F49d6E4D5c8fe4B9749c2CB0204f43`
         let liquidationAddressCheck = address
@@ -385,70 +404,87 @@ export class CronJobService {
         // console.log(`wrappedComptrollerContract`, await wrappedComptrollerContract.getAllMarkets())
         let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
         // console.log(allMarketAddress)
+        let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
+
 
         for (let count = 0; count < martketContractsDetail.length; count++) {
             let eachContractDetail = martketContractsDetail[count]
             const eachContract = new ethers.Contract(eachContractDetail?.address ?? '', eachContractDetail.abi, provider);
             const eachContractWithSignerAA = eachContract.connect(wallet);
-            // console.log(`eachContract`,eachContract)
             if (eachContractDetail.address === CUSDC_CONTRACT_ADDRESS) {
                 //usdc
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                console.log(`borrowBalance`, borrowBalance)
+                console.log(`borrowBalance`, Number(borrowBalance.toString()))
                 martketContractsDetail[count] = {
                     ...eachContractDetail,
                     borrowInNumber: Number(borrowBalance.toString()),
                     borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber
                 }
-
+                console.log(martketContractsDetail[count].borrowInNumber)
+                console.log(martketContractsDetail[count].borrowInUsdInNumber)
             }
             else if (eachContractDetail.address === CWETH_CONTRACT_ADDRESS) {
                 // // //weth
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                console.log(`wethPriceInNumber`, wethPriceInNumber)
+                console.log(`borrowBalance`, Number(borrowBalance.toString()))
+                // console.log(`wethPriceInNumber`, wethPriceInNumber)
                 martketContractsDetail[count] = {
                     ...eachContractDetail,
                     borrowInNumber: Number(borrowBalance.toString()),
                     borrowInUsdInNumber: Number(borrowBalance.toString()) * wethPriceInNumber
                 }
+                console.log(martketContractsDetail[count].borrowInNumber)
+                console.log(martketContractsDetail[count].borrowInUsdInNumber)
             }
             else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
                 // // //eth
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+                console.log(`borrowBalance`, Number(borrowBalance.toString()))
                 martketContractsDetail[count] = {
                     ...eachContractDetail,
                     borrowInNumber: Number(borrowBalance.toString()),
                     borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber
                 }
+                console.log(martketContractsDetail[count].borrowInNumber)
+                console.log(martketContractsDetail[count].borrowInUsdInNumber)
             }
             // const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
         }
 
 
-        console.log(`martketContractsDetail`, martketContractsDetail)
+        // console.log(`martketContractsDetail`, martketContractsDetail)
         let accountLiquidityInNumber = 0
         var allAccountLiquidity = await wrappedComptrollerContract.getAccountLiquidity(liquidationAddressCheck);
-        // console.log(`accountLiquidity`, allAccountLiquidity)
+        if (allAccountLiquidity[0]) {
+            let testaccountLiquidityInNumber = Number(allAccountLiquidity[0].toString())
+            console.log(`testaccountLiquidityInNumber`, testaccountLiquidityInNumber)
+        }
         if (allAccountLiquidity[1]) {
             accountLiquidityInNumber = Number(allAccountLiquidity[1].toString())
+            console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)
+        }
+        if (allAccountLiquidity[2]) {
+            let test3accountLiquidityInNumber = Number(allAccountLiquidity[2].toString())
+            console.log(`test3accountLiquidityInNumber`, test3accountLiquidityInNumber)
         }
 
         for (let count = 0; count < martketContractsDetail.length; count++) {
             let eachContractDetail = martketContractsDetail[count]
+            console.log(`each assest in usd`, eachContractDetail.borrowInUsdInNumber)
             accountStatus = {
                 ...accountStatus,
                 totalBorrowAmountInUsdInNumber: accountStatus.totalBorrowAmountInUsdInNumber + eachContractDetail.borrowInUsdInNumber
             }
         }
-
-        console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)
+        console.log(`totalBorrowAmountInUsdInNumber`, accountStatus.totalBorrowAmountInUsdInNumber)
+        console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)   //this is real account liquidyt in usd  = limit
         accountStatus = {
             ...accountStatus,
-            totalLimitedAmountInUsdInNumber: accountLiquidityInNumber + accountStatus.totalBorrowAmountInUsdInNumber
+            totalLimitedAmountInUsdInNumber: accountLiquidityInNumber / 100000000
         }
         accountStatus = {
             ...accountStatus,
-            currentPercentageLimit: (accountStatus.totalBorrowAmountInUsdInNumber / accountStatus.totalLimitedAmountInUsdInNumber)
+            currentPercentageLimit: (((accountStatus.totalBorrowAmountInUsdInNumber / 1000000000000000000) / (accountStatus.totalLimitedAmountInUsdInNumber)) * 100)
         }
 
         console.log(`accountStatus`, accountStatus.currentPercentageLimit)

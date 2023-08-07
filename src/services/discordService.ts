@@ -10,8 +10,8 @@ import ChannelsCommand from '../commands/channel';
 import {ReturnStatusCode , ReturnStatusMessage} from '../enum/enum'
 
 
-// const DISCORD_TOKEN = process.env.DISCORD_TOKEN
-const DISCORD_TOKEN = `MTEwNzMxMDkwNjYyNDQ1NDc1Nw.GsL9Fa._MJJntyTBVmKsySqd-O9PobJFH_nw362XExGOc`
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN
+// const DISCORD_TOKEN = `MTEwNzMxMDkwNjYyNDQ1NDc1Nw.GsL9Fa._MJJntyTBVmKsySqd-O9PobJFH_nw362XExGOc`
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID
 const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID
 const client = new Client({ 
