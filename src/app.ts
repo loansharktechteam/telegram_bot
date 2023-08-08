@@ -74,7 +74,8 @@ telegramBotService()
 
 
 const job = new CronJob.CronJob("*/5 * * * * *", function () {
-    // checkTrigger()
+    console.log(`trigger cron job by bot`)
+    cronJobService.triggerLiquidationAlert({},{});
 })
 
 job.start()
