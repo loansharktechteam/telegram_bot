@@ -181,10 +181,11 @@ export class CronJobService {
 
     getAllBorrowLimitOverCondition = async () => {
         console.log(`getAllBorrowLimitOverCondition`)
-        let body = { condition: { $elemMatch: { condition: "borrowLimitOver" } }, status: "on" }
+        let body = { "condition.condition": "borrowLimitOver", status: "on" }
         // let body = {condition:{$elemMatch:{condition:"abcd"}}}
         try {
             const saveRespond = await SubscriberInformation.find(body);
+            console.log(saveRespond)
             return {
                 code: 0,
                 message: "success",
@@ -259,10 +260,12 @@ export class CronJobService {
         // return
     }
 
-    startLiquidation = async ()=>{
+    startLiquidation = async () => {
         const result = await this.getAllBorrowLimitOverCondition()
+        console.log(result)
         if (result.result.length > 0) {
             //someone subscribe
+            console.log(`start looping`)
             for (let count = 0; count < result.result.length; count++) {
                 let eachSubscription = result.result[count]
                 // checkEachSubscribedCondition(result.result[count])
@@ -279,7 +282,7 @@ export class CronJobService {
                 })
             }
         }
-        return 
+        return
     }
 
     checkAlertNeedTrigger = async (address: any, alertThreshold: any) => {
@@ -287,7 +290,8 @@ export class CronJobService {
         let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver')
         console.log(pass24HoursHistory)
         pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
-        if (pass24HoursHistory.length <= 0) return false
+        console.log(`pass24HoursHistory.length`,pass24HoursHistory.length)
+        if (pass24HoursHistory.length > 0) return false
 
 
         const div18zero = 1000000000000000000
