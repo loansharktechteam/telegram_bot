@@ -73,9 +73,9 @@ console.log(`https App is listening on port ${httpsPort} !`)
 telegramBotService()
 
 
-const job = new CronJob.CronJob("*/5 * * * * *", function () {
+const job = new CronJob.CronJob("* * * * *", function () {
     console.log(`trigger cron job by bot`)
-    cronJobService.triggerLiquidationAlert({},{});
+    cronJobService.startLiquidation();
 })
 
 job.start()
