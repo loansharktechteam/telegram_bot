@@ -222,6 +222,7 @@ export class CronJobService {
         }
         //write history for not trigger again within 24hrs
         let obj = {
+            key: eachSubscribeInformation.key,
             address: eachSubscribeInformation.address,
             condition: 'borrowLimitOver',
             createDate: new Date()
@@ -271,7 +272,8 @@ export class CronJobService {
                 // checkEachSubscribedCondition(result.result[count])
                 eachSubscription.condition.map(async (eachCondition: any) => {
                     if (eachCondition.condition === 'borrowLimitOver') {
-                        let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value)
+                       console.log(` eachSubscription.key`, eachSubscription.key)
+                        let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
                         console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
                         if (checkAlertNeedTriggerResult === true) {
                             //if triggered alert send alert
@@ -285,9 +287,9 @@ export class CronJobService {
         return
     }
 
-    checkAlertNeedTrigger = async (address: any, alertThreshold: any) => {
+    checkAlertNeedTrigger = async (address: any, alertThreshold: any,workflowKey:any) => {
 
-        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver')
+        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver',workflowKey)
         console.log(pass24HoursHistory)
         pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
         console.log(`pass24HoursHistory.length`,pass24HoursHistory.length)

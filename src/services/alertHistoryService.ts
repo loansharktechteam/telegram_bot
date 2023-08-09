@@ -30,14 +30,15 @@ export class AlertHistoryService {
         }
     }
 
-    getAlertHistoryByCreateDateAndCondition = async (address:any,condition:any) => {
+    getAlertHistoryByCreateDateAndCondition = async (address:any,condition:any,workflowKey:any) => {
         let now = moment().add(-1,'days')
         console.log(now)
         const saveRespond = await AlertHistory.find({
             $and: [
                 { createDate: { $gte: now } },
                 { condition: condition },
-                { address: address}
+                { address: address},
+                {key:workflowKey}
             ]
         });
         return saveRespond
