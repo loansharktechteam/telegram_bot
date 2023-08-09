@@ -50,7 +50,7 @@ router.post('/getSubscriberInformationByKey', async function (req: Request, res:
 
 router.post('/updateSubscriberInformation', async function (req: Request, res: Response) {
     //   console.log(req, res)
-    const { key } = req.body
+    const { key,notification } = req.body
     try {
         const result = await subscriberInformationService.updateSubscriberInformation(req.body);
         if(result.code===0){

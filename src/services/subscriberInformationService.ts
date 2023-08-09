@@ -52,7 +52,13 @@ export class SubscriberInformationService {
     updateSubscriberInformation = async (subscriberInformation: any) => {
         try {
             console.log(subscriberInformation)
-            const saveRespond = await SubscriberInformation.updateOne(subscriberInformation)
+            delete subscriberInformation['subscriberInformation'];
+            console.log(subscriberInformation)
+            let filter = { key: subscriberInformation.key }
+            
+
+            // const saveRespond = await SubscriberInformation.updateOne(subscriberInformation)
+            const saveRespond = await SubscriberInformation.findOneAndUpdate(filter, subscriberInformation)
             console.log(saveRespond)
             return {
                 code: 0,
@@ -72,35 +78,35 @@ export class SubscriberInformationService {
 
     updateSubscriberTgChatIdByUsername = async (chatId: string, username: string) => {
         console.log(chatId, username)
-        let requestBody = {"notification.telegram.username":username}
+        let requestBody = { "notification.telegram.username": username }
         let result = await this.getSubscriberInformation(requestBody)
         let successCount = 0
         let failCount = 0
-        console.log(`got subscribe`,result)
-        if(result.length>0){
-            for(let i=0;i<result.length;i++){
+        console.log(`got subscribe`, result)
+        if (result.length > 0) {
+            for (let i = 0; i < result.length; i++) {
                 console.log(result[i])
-                console.log(`83`,result[i].notification.telegram.chatId)
-                if ((result[i]?.notification?.telegram?.chatId??null)!==null) {
-                    result[i].notification.telegram.chatId=chatId
-                    console.log(`got subscribe456`,result[i])
+                console.log(`83`, result[i].notification.telegram.chatId)
+                if ((result[i]?.notification?.telegram?.chatId ?? null) !== null) {
+                    result[i].notification.telegram.chatId = chatId
+                    console.log(`got subscribe456`, result[i])
                     let result2 = await this.updateSubscriberInformation(result[i])
-                    console.log(`got subscribe123`,result2)
-                    if(result2){
-                        successCount = successCount+1
-                    }else{
-                        failCount = failCount+1
+                    console.log(`got subscribe123`, result2)
+                    if (result2.code===0) {
+                        successCount = successCount + 1
+                    } else {
+                        failCount = failCount + 1
                     }
                 }
             }
         }
-        if(failCount>0){
+        if (failCount > 0) {
             return {
-                message:'fail',
+                message: 'fail',
             }
-        }else{
+        } else {
             return {
-                message:'success',
+                message: 'success',
             }
         }
     }
