@@ -26,6 +26,7 @@ const client = new Client({
 });
 const rest = new REST().setToken(DISCORD_TOKEN?DISCORD_TOKEN:'');
 
+// client.fetchWebhook()
 export async function sendDiscordMessageByUsername(clientId:any,message:any){
   return sendDm(clientId,message)
 }

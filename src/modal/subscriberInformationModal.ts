@@ -30,7 +30,8 @@ const SubscriberInformationSchema: Schema = new Schema({
         },
         discord: { 
             status:{type: String},
-            chatId:{type: String}
+            chatId:{type: String},
+            clientId:{type: String}
         },
     }
 });
