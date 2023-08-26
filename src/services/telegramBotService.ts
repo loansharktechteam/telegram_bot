@@ -94,6 +94,7 @@ async function removeSubscribe(username: any, chatId: any) {
 export function telegramBotService() {
 
     bot.onText(/\/startsubscribe/, async function (msg) {
+        console.log(`start subscribe msg`,msg)
         let chatId = msg.chat.id; //用戶的ID
         let username = msg?.chat?.username??''; //用戶的ID
         // let sentMsg = await bot.sendMessage(chatId, "type your wallet", { reply_to_message_id: msg.message_id })
