@@ -94,25 +94,46 @@ async function removeSubscribe(username: any, chatId: any) {
 export function telegramBotService() {
 
     bot.onText(/\/startsubscribe/, async function (msg) {
+        console.log(msg)
+        console.log(msg.text)
+        let key = msg?.text?.replace("/start","")?.trim()??''
+        //add validation for walletAddress
+        console.log(`key`,key)
+
         let chatId = msg.chat.id; //用戶的ID
         let username = msg?.chat?.username??''; //用戶的ID
-        // let sentMsg = await bot.sendMessage(chatId, "type your wallet", { reply_to_message_id: msg.message_id })
-        let sentMsg = await bot.sendMessage(chatId, "type your wallet", {
-            reply_markup: {
-                force_reply: true
-            }
-        }).then(function (res) {
-            bot.onReplyToMessage(res.chat.id, res.message_id, async function (msg) {
-                //call api to add
-                let result = await subscriberInformationService.updateSubscriberTgChatIdByUsername(chatId.toString(),username)
+
+        let result = await subscriberInformationService.updateSubscriberTgChatIdBySubscribeKey(key,chatId.toString(),username)
                 
-                if(result.message==='success'){
-                    bot.sendMessage(chatId, 'success register')
-                }else{
-                    bot.sendMessage(chatId, 'fail to register. please seek help in discord')
-                }
-            })
-        })
+        if(result.message==='success'){
+            bot.sendMessage(chatId, 'success register')
+        }else{
+            bot.sendMessage(chatId, 'fail to register. please seek help in discord')
+        }
+
+        
+        // console.log(msg)
+        // console.log(msg.text)
+        
+        // let chatId = msg.chat.id; //用戶的ID
+        // let username = msg?.chat?.username??''; //用戶的ID
+        // // let sentMsg = await bot.sendMessage(chatId, "type your wallet", { reply_to_message_id: msg.message_id })
+        // let sentMsg = await bot.sendMessage(chatId, "type your wallet", {
+        //     reply_markup: {
+        //         force_reply: true
+        //     }
+        // }).then(function (res) {
+        //     bot.onReplyToMessage(res.chat.id, res.message_id, async function (msg) {
+        //         //call api to add
+        //         let result = await subscriberInformationService.updateSubscriberTgChatIdByUsername(chatId.toString(),username)
+                
+        //         if(result.message==='success'){
+        //             bot.sendMessage(chatId, 'success register')
+        //         }else{
+        //             bot.sendMessage(chatId, 'fail to register. please seek help in discord')
+        //         }
+        //     })
+        // })
     });
 
     bot.onText(/\/endsubscribe/, async function (msg) {
@@ -120,6 +141,48 @@ export function telegramBotService() {
         let username = msg.chat.username; //用戶的ID
         let result = await removeSubscribe(username,chatId)
         bot.sendMessage(chatId,result.message)
+    });
+
+    bot.onText(/\/start/, async function (msg) {
+        console.log(msg)
+        console.log(msg.text)
+        let key = msg?.text?.replace("/start","")?.trim()??''
+        //add validation for walletAddress
+        console.log(`key`,key)
+
+        let chatId = msg.chat.id; //用戶的ID
+        let username = msg?.chat?.username??''; //用戶的ID
+
+        let result = await subscriberInformationService.updateSubscriberTgChatIdBySubscribeKey(key,chatId.toString(),username)
+                
+        if(result.message==='success'){
+            bot.sendMessage(chatId, 'success register')
+        }else{
+            bot.sendMessage(chatId, 'fail to register. please seek help in discord')
+        }
+
+
+        // // let sentMsg = await bot.sendMessage(chatId, "type your wallet", { reply_to_message_id: msg.message_id })
+        // let sentMsg = await bot.sendMessage(chatId, "type your wallet", {
+        //     reply_markup: {
+        //         force_reply: true
+        //     }
+        // }).then(function (res) {
+        //     bot.onReplyToMessage(res.chat.id, res.message_id, async function (msg) {
+        //         //call api to add
+        //         let result = await subscriberInformationService.updateSubscriberTgChatIdByUsername(chatId.toString(),username)
+                
+        //         if(result.message==='success'){
+        //             bot.sendMessage(chatId, 'success register')
+        //         }else{
+        //             bot.sendMessage(chatId, 'fail to register. please seek help in discord')
+        //         }
+        //     })
+        // })
+        // let chatId = msg.chat.id; //用戶的ID
+        // let username = msg.chat.username; //用戶的ID
+        // let result = await removeSubscribe(username,chatId)
+        // bot.sendMessage(chatId,result.message)
     });
 
 

@@ -55,7 +55,7 @@ export class SubscriberInformationService {
             delete subscriberInformation['subscriberInformation'];
             console.log(subscriberInformation)
             let filter = { key: subscriberInformation.key }
-            
+
 
             // const saveRespond = await SubscriberInformation.updateOne(subscriberInformation)
             const saveRespond = await SubscriberInformation.findOneAndUpdate(filter, subscriberInformation)
@@ -92,7 +92,43 @@ export class SubscriberInformationService {
                     console.log(`got subscribe456`, result[i])
                     let result2 = await this.updateSubscriberInformation(result[i])
                     console.log(`got subscribe123`, result2)
-                    if (result2.code===0) {
+                    if (result2.code === 0) {
+                        successCount = successCount + 1
+                    } else {
+                        failCount = failCount + 1
+                    }
+                }
+            }
+        }
+        if (failCount > 0) {
+            return {
+                message: 'fail',
+            }
+        } else {
+            return {
+                message: 'success',
+            }
+        }
+    }
+
+    updateSubscriberTgChatIdBySubscribeKey = async (key: string, chatId: string, username: string) => {
+        console.log(`updateSubscriberTgChatIdBySubscribeKey`, key, chatId, username)
+        if (key === '') {
+            return {
+                message: 'fail',
+            }
+        }
+        let requestBody = { key: key }
+        let result = await this.getSubscriberInformation(requestBody)
+        let successCount = 0
+        let failCount = 0
+        if (result.length > 0) {
+            for (let i = 0; i < result.length; i++) {
+                if ((result[i]?.notification?.telegram?.chatId ?? null) !== null) {
+                    result[i].notification.telegram.chatId = chatId
+                    result[i].notification.telegram.status = "on"
+                    let result2 = await this.updateSubscriberInformation(result[i])
+                    if (result2.code === 0) {
                         successCount = successCount + 1
                     } else {
                         failCount = failCount + 1
