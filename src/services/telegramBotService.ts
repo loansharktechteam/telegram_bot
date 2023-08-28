@@ -111,7 +111,7 @@ export function telegramBotService() {
             bot.sendMessage(chatId, 'fail to register. please seek help in discord')
         }
 
-        
+
         // console.log(msg)
         // console.log(msg.text)
         
