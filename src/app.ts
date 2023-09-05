@@ -26,7 +26,7 @@ app.use(cors({
 }));
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-
+const sslCert = fs.readFileSync(`${__dirname}/B5A96CBA293C33D986D193CA56347609.txt`)
 const key = fs.readFileSync(`${__dirname}/private.key`)
 const cert = fs.readFileSync(`${__dirname}/certificate.crt`)
 
@@ -47,7 +47,9 @@ if (process.env.DATABASE_URL) {
 app.get("/toto", (req: Request, res: Response) => {
     res.send("Hello toto")
 })
-
+app.get("/.well-known/pki-validation/B5A96CBA293C33D986D193CA56347609.txt", (req: Request, res: Response) => {
+    res.send(sslCert)
+})
 // app.use('telegram',tele)
 
 app.use('/workflow', workflowRouter)

@@ -28,7 +28,7 @@ import { SubscriberInformation } from '../modal/subscriberInformationModal'
 import { AlertHistoryService } from '../services/alertHistoryService'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
-const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
+// const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
 const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
 
 // async function getChatIdByUsername(username:string){
@@ -347,31 +347,31 @@ export class CronJobService {
                 totalSupply: null,
                 value: null,
             },
-            {
-                address: CWETH_CONTRACT_ADDRESS, //cweth
-                abi: cwethAbi,
-                balance: null,
-                borrow: null,
-                borrowInNumber: 0,
-                borrowInUsdInNumber: 0,
-                borrowBalanceStored: null,
-                borrowCaps: null,
-                borrowRatePerBlock: null,
-                cash: null,
-                exchangeRate: null,
-                isMember: null,
-                markets: null,
-                price: null,
-                supply: null,
-                supplyRatePerBlock: null,
-                token: null,
-                tokenBorrowAPY: null,
-                tokenSupplyAPY: null,
-                totalBorrows: null,
-                totalBorrowsInNumber: null,
-                totalSupply: null,
-                value: null,
-            },
+            // {
+            //     address: CWETH_CONTRACT_ADDRESS, //cweth
+            //     abi: cwethAbi,
+            //     balance: null,
+            //     borrow: null,
+            //     borrowInNumber: 0,
+            //     borrowInUsdInNumber: 0,
+            //     borrowBalanceStored: null,
+            //     borrowCaps: null,
+            //     borrowRatePerBlock: null,
+            //     cash: null,
+            //     exchangeRate: null,
+            //     isMember: null,
+            //     markets: null,
+            //     price: null,
+            //     supply: null,
+            //     supplyRatePerBlock: null,
+            //     token: null,
+            //     tokenBorrowAPY: null,
+            //     tokenSupplyAPY: null,
+            //     totalBorrows: null,
+            //     totalBorrowsInNumber: null,
+            //     totalSupply: null,
+            //     value: null,
+            // },
             {
                 address: CUSDC_CONTRACT_ADDRESS, //cusdc
                 abi: cusdcAbi,
@@ -455,19 +455,19 @@ export class CronJobService {
                 console.log(martketContractsDetail[count].borrowInNumber)
                 console.log(martketContractsDetail[count].borrowInUsdInNumber)
             }
-            else if (eachContractDetail.address === CWETH_CONTRACT_ADDRESS) {
-                // // //weth
-                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                console.log(`borrowBalance`, Number(borrowBalance.toString()))
-                // console.log(`wethPriceInNumber`, wethPriceInNumber)
-                martketContractsDetail[count] = {
-                    ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()),
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * wethPriceInNumber
-                }
-                console.log(martketContractsDetail[count].borrowInNumber)
-                console.log(martketContractsDetail[count].borrowInUsdInNumber)
-            }
+            // else if (eachContractDetail.address === CWETH_CONTRACT_ADDRESS) {
+            //     // // //weth
+            //     let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+            //     console.log(`borrowBalance`, Number(borrowBalance.toString()))
+            //     // console.log(`wethPriceInNumber`, wethPriceInNumber)
+            //     martketContractsDetail[count] = {
+            //         ...eachContractDetail,
+            //         borrowInNumber: Number(borrowBalance.toString()),
+            //         borrowInUsdInNumber: Number(borrowBalance.toString()) * wethPriceInNumber
+            //     }
+            //     console.log(martketContractsDetail[count].borrowInNumber)
+            //     console.log(martketContractsDetail[count].borrowInUsdInNumber)
+            // }
             else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
                 // // //eth
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
