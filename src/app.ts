@@ -47,6 +47,10 @@ if (process.env.DATABASE_URL) {
 app.get("/toto", (req: Request, res: Response) => {
     res.send("Hello toto")
 })
+
+/*
+this part for port forwading in ec2 to allow verify ssl cert
+*/
 app.get("/.well-known/pki-validation/B5A96CBA293C33D986D193CA56347609.txt", (req: Request, res: Response) => {
     res.send(sslCert)
 })
