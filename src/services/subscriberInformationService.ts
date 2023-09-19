@@ -150,6 +150,25 @@ export class SubscriberInformationService {
     modifySubscriberInformation = async () => {
 
     }
+
+    deleteSubscriberInformation = async (key:any)=>{
+        console.log(`deleteSubscriberInformation service`,key)
+        try{
+            const subscriberInformationDeleteRes = await SubscriberInformation.findOneAndRemove(key);
+            return {
+                code:0,
+                message:"success",
+                result:subscriberInformationDeleteRes            
+            }
+        }
+        catch(e){
+            return {
+                code:-1,
+                message:"fail",
+                result:{}
+            }
+        }
+    }
 }
 
 // module.exports SubscriberInformationService;
