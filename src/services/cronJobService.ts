@@ -273,8 +273,10 @@ export class CronJobService {
                 eachSubscription.condition.map(async (eachCondition: any) => {
                     if (eachCondition.condition === 'borrowLimitOver') {
                        console.log(` eachSubscription.key`, eachSubscription.key)
-                        let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
-                        console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
+                        let checkAlertNeedTriggerResult = true
+                        // let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
+                        // console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
+
                         if (checkAlertNeedTriggerResult === true) {
                             //if triggered alert send alert
                             console.log(`trigger alert`)
