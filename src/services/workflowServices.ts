@@ -64,7 +64,7 @@ export async function updateWorkflowByKey(workflow:any){
 export async function deleteWorkflowByKey(key:any){
     console.log(`deleteWorkflowByKey service`,key)
     try{
-        const workflowUpdateRes = await Workflow.findOneAndRemove(key,{new:true})
+        const workflowUpdateRes = await Workflow.findOneAndRemove(key)
         return {
             code:0,
             message:"success",
