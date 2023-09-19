@@ -82,7 +82,7 @@ telegramBotService()
 
 const job = new CronJob.CronJob("* * * * *", function () {
     console.log(`trigger cron job by bot`)
-    // cronJobService.startLiquidation();
+    cronJobService.startLiquidation();
 })
 
 job.start()
