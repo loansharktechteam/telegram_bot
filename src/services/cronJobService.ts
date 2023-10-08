@@ -5,6 +5,9 @@ import { ethers, Wallet } from "ethers";
 import { formatBytes32String } from "ethers/lib/utils";
 import { Client, IntentsBitField } from 'discord.js';
 import redstone from "redstone-api";
+// import { useContractRead, useContractReads } from "wagmi";
+// import contracts from "../generated/deployedContracts";
+
 import usdcAbi from "../abi/usdc.json"
 import wethAbi from "../abi/weth.json"
 import comptrollerAbi from "../abi/Comptroller.json"
@@ -272,10 +275,10 @@ export class CronJobService {
                 // checkEachSubscribedCondition(result.result[count])
                 eachSubscription.condition.map(async (eachCondition: any) => {
                     if (eachCondition.condition === 'borrowLimitOver') {
-                       console.log(` eachSubscription.key`, eachSubscription.key)
-                        let checkAlertNeedTriggerResult = true
-                        // let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
-                        // console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
+                        console.log(` eachSubscription.key`, eachSubscription.key)
+                        // let checkAlertNeedTriggerResult = true
+                        let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
+                        console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
 
                         if (checkAlertNeedTriggerResult === true) {
                             //if triggered alert send alert
@@ -289,13 +292,13 @@ export class CronJobService {
         return
     }
 
-    checkAlertNeedTrigger = async (address: any, alertThreshold: any,workflowKey:any) => {
+    checkAlertNeedTrigger = async (address: any, alertThreshold: any, workflowKey: any) => {
 
-        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver',workflowKey)
-        console.log(pass24HoursHistory)
+        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver', workflowKey)
+        // console.log(pass24HoursHistory)
         pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
-        console.log(`pass24HoursHistory.length`,pass24HoursHistory.length)
-        if (pass24HoursHistory.length > 0) return false
+        console.log(`pass24HoursHistory.length`, pass24HoursHistory.length)
+        // if (pass24HoursHistory.length > 0) return false
 
 
         const div18zero = 1000000000000000000
@@ -415,14 +418,12 @@ export class CronJobService {
         let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
         let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
 
-
-
-        const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+        // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+        const provider = new ethers.providers.JsonRpcProvider("https://1rpc.io/scroll/sepolia");
         const wallet = new ethers.Wallet("34fca74d424c5acd869a373b6c5907fa0f42e9def560054e09a9d3e27764b6e5", provider)
         const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
         const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
-
         const redstoneCacheLayerUrls = [
             "https://d33trozg86ya9x.cloudfront.net",
         ];
@@ -434,10 +435,7 @@ export class CronJobService {
         };
 
         const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
-        // console.log(`wrappedComptrollerContract`,await wrappedComptrollerContract)
-        // console.log(`wrappedComptrollerContract`, await wrappedComptrollerContract.getAllMarkets())
         let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
-        // console.log(allMarketAddress)
         let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
 
 

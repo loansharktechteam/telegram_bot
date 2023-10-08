@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@google-cloud/local-auth": "^2.1.0",
-    "@redstone-finance/evm-connector": "^0.2.1",
+    "@redstone-finance/evm-connector": "^0.2.6",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "cron": "^2.3.1",
