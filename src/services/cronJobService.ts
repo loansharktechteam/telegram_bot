@@ -298,7 +298,7 @@ export class CronJobService {
         // console.log(pass24HoursHistory)
         pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
         console.log(`pass24HoursHistory.length`, pass24HoursHistory.length)
-        // if (pass24HoursHistory.length > 0) return false
+        if (pass24HoursHistory.length > 0) return false
 
 
         const div18zero = 1000000000000000000
