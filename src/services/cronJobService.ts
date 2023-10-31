@@ -29,11 +29,12 @@ import { bot } from '../services/telegramBotService'
 import { sendDiscordMessageByUsername } from '../services/discordService'
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
 import { AlertHistoryService } from '../services/alertHistoryService'
+import { PriceLogginService } from '../services/priceLogginService'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
 // const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
 const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
-
+const div18zero = 1000000000000000000
 // async function getChatIdByUsername(username:string){
 //     try{
 //         const result = await TelegramMapping.findOne({username:username});
@@ -58,6 +59,8 @@ export class CronJobService {
     }
 
     alertHistoryService = new AlertHistoryService()
+    priceLogginService = new PriceLogginService()
+
     checkSubscriptedNoitifcation = async () => {
         console.log(`checkSubscriptedNoitifcation`)
         let body = { "alertSubscripte.telegram": true }
@@ -188,7 +191,6 @@ export class CronJobService {
         // let body = {condition:{$elemMatch:{condition:"abcd"}}}
         try {
             const saveRespond = await SubscriberInformation.find(body);
-            console.log(saveRespond)
             return {
                 code: 0,
                 message: "success",
@@ -237,31 +239,9 @@ export class CronJobService {
     }
 
     triggerLiquidationAlert = async (req: any, res: any) => {
-        // console.log(this)
         this.startLiquidation()
         res.status(200).json({ message: "OK" })
         return
-        // const result = await this.getAllBorrowLimitOverCondition()
-        // if (result.result.length > 0) {
-        //     //someone subscribe
-        //     for (let count = 0; count < result.result.length; count++) {
-        //         let eachSubscription = result.result[count]
-        //         // checkEachSubscribedCondition(result.result[count])
-        //         eachSubscription.condition.map(async (eachCondition: any) => {
-        //             if (eachCondition.condition === 'borrowLimitOver') {
-        //                 let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value)
-        //                 console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
-        //                 if (checkAlertNeedTriggerResult === true) {
-        //                     //if triggered alert send alert
-        //                     console.log(`trigger alert`)
-        //                     this.checkEachSubscribedCondition(eachSubscription)
-        //                 }
-        //             }
-        //         })
-        //     }
-        // }
-        // res.status(200).json({ message: "OK" })
-        // return
     }
 
     startLiquidation = async () => {
@@ -301,7 +281,7 @@ export class CronJobService {
         if (pass24HoursHistory.length > 0) return false
 
 
-        const div18zero = 1000000000000000000
+
         // let liquidationAddressCheck = `0x24DE9902d6F49d6E4D5c8fe4B9749c2CB0204f43`
         let liquidationAddressCheck = address
 
@@ -530,5 +510,72 @@ export class CronJobService {
         } else {
             return false
         }
+    }
+
+    getPriceFromRedSton = async () => {
+        const usdcPrice = await redstone.getPrice("USDC");
+        //real usdc price usdcPrice.value
+        const ethPrice = await redstone.getPrice("ETH");
+        //real eth price ethPrice.value
+
+        const priceArray = new Map();
+        priceArray.set("USDC", ethers.utils.parseUnits(usdcPrice.value.toString()));
+        priceArray.set("WETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        priceArray.set("ETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        let usdcPriceInNumber = Number(priceArray.get('USDC').toString()) / div18zero
+        let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
+        let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
+
+        return {
+            usdcPriceInNumber,
+            ethPriceInNumber
+        }
+    }
+    triggerScoreSystem = async (req: any, res: any) => {
+        this.startScoreSystem()
+        res.status(200).json({ message: "OK" })
+        return
+    }
+
+    startScoreSystem = async () => {
+        const currentPriceObject = await this.getPriceFromRedSton()
+        let priceLogRequestBody = {
+            key: "testkey",
+            ceth: currentPriceObject.ethPriceInNumber,
+            cusdc: currentPriceObject.usdcPriceInNumber,
+            createDate: new Date(),
+        }
+        const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
+        const result = await this.getAllBorrowLimitOverCondition()
+        console.log(result)
+        if (result.result.length > 0) {
+            //someone subscribe
+            let activeSubscriptionList: any = []
+            for (let count = 0; count < result.result.length; count++) {
+                let eachSubscription = result.result[count]
+                if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
+                    activeSubscriptionList.push(eachSubscription.address)
+                }
+            }
+
+            for (let count = 0; count < activeSubscriptionList.length; count++) {
+                activeSubscriptionList[count]
+                //calculate mark
+                //insert record              
+                let addSubsctiptionMarksRequestBody = {
+                    key: "testkey",
+                    address: activeSubscriptionList[count],
+                    marks: "1.0",
+                    createDate: new Date(),
+                    createBy: 'SYSTEM',
+                    lastUpdateDate: new Date(),
+                    lastUpdateBy: 'SYSTEM',
+                }
+                const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+
+            }
+
+        }
+        return
     }
 }

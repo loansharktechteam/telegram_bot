@@ -62,12 +62,8 @@ app.use('/telegram', telegramRouter)
 app.use('/noitifcation', subscriberInformationRouter)
 app.use('/discord', discordRouter);
 
-// app.get('/testTriggerCronJob',checkTrigger)
 app.get('/testTriggerCronJob', cronJobService.triggerLiquidationAlert)
-
-// app.use('/email', emailRouter);
-// app.use('/discord', discordRouter);
-// app.use('/workflow', workflowRouter);
+app.get('/testScoreSystem', cronJobService.triggerScoreSystem)
 
 app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
