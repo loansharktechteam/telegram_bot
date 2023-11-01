@@ -47,6 +47,24 @@ export class PriceLogginService {
             }
         }
     }
+
+    getScoreByAddress = async (address: string) => {
+        try {
+            const saveRespond = await SubscriptionMarks.find({ address: address });
+            return {
+                code: 0,
+                message: "success",
+                result: saveRespond
+            }
+        }
+        catch (e) {
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
 }
 
 // module.exports SubscriberInformationService;

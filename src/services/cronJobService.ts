@@ -30,6 +30,10 @@ import { sendDiscordMessageByUsername } from '../services/discordService'
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
 import { AlertHistoryService } from '../services/alertHistoryService'
 import { PriceLogginService } from '../services/priceLogginService'
+import { ScrollScanService } from '../services/scrollScanService'
+import {
+    filterDuplicateElement
+} from '../util/generalFunction'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
 // const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
@@ -60,7 +64,8 @@ export class CronJobService {
 
     alertHistoryService = new AlertHistoryService()
     priceLogginService = new PriceLogginService()
-
+    scrollScanService = new ScrollScanService()
+    
     checkSubscriptedNoitifcation = async () => {
         console.log(`checkSubscriptedNoitifcation`)
         let body = { "alertSubscripte.telegram": true }
@@ -531,6 +536,11 @@ export class CronJobService {
             ethPriceInNumber
         }
     }
+
+    getTokenHolderByContractAddress = async (address:string)=>{
+
+    }
+
     triggerScoreSystem = async (req: any, res: any) => {
         this.startScoreSystem()
         res.status(200).json({ message: "OK" })
@@ -546,36 +556,62 @@ export class CronJobService {
             createDate: new Date(),
         }
         const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
-        const result = await this.getAllBorrowLimitOverCondition()
-        console.log(result)
-        if (result.result.length > 0) {
-            //someone subscribe
-            let activeSubscriptionList: any = []
-            for (let count = 0; count < result.result.length; count++) {
-                let eachSubscription = result.result[count]
-                if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
-                    activeSubscriptionList.push(eachSubscription.address)
-                }
+        let allHolderAddressArr:any[] = []
+        const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
+        console.log(`ethHolderAddress`, ethHolderAddress.length)
+
+        const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
+        console.log(`usdcHolderAddress`, usdcHolderAddress.length)
+        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress,usdcHolderAddress)
+        console.log(`all address`, allHolderAddressArr.length)
+        allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
+        console.log(`all address after filter`, allHolderAddressArr.length)
+
+        for (let count = 0; count < allHolderAddressArr.length; count++) {
+            //calculate mark
+            //insert record              
+            let addSubsctiptionMarksRequestBody = {
+                key: "testkey",
+                address: allHolderAddressArr[count],
+                marks: "1.0",
+                createDate: new Date(),
+                createBy: 'SYSTEM',
+                lastUpdateDate: new Date(),
+                lastUpdateBy: 'SYSTEM',
             }
-
-            for (let count = 0; count < activeSubscriptionList.length; count++) {
-                activeSubscriptionList[count]
-                //calculate mark
-                //insert record              
-                let addSubsctiptionMarksRequestBody = {
-                    key: "testkey",
-                    address: activeSubscriptionList[count],
-                    marks: "1.0",
-                    createDate: new Date(),
-                    createBy: 'SYSTEM',
-                    lastUpdateDate: new Date(),
-                    lastUpdateBy: 'SYSTEM',
-                }
-                const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
-
-            }
-
+            const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
         }
+
+
+
+        // const result = await this.getAllBorrowLimitOverCondition()
+        // if (result.result.length > 0) {
+        //     //someone subscribe
+        //     let activeSubscriptionList: any = []
+        //     for (let count = 0; count < result.result.length; count++) {
+        //         let eachSubscription = result.result[count]
+        //         if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
+        //             activeSubscriptionList.push(eachSubscription.address)
+        //         }
+        //     }
+
+        //     for (let count = 0; count < activeSubscriptionList.length; count++) {
+        //         activeSubscriptionList[count]
+        //         //calculate mark
+        //         //insert record              
+        //         let addSubsctiptionMarksRequestBody = {
+        //             key: "testkey",
+        //             address: activeSubscriptionList[count],
+        //             marks: "1.0",
+        //             createDate: new Date(),
+        //             createBy: 'SYSTEM',
+        //             lastUpdateDate: new Date(),
+        //             lastUpdateBy: 'SYSTEM',
+        //         }
+        //         const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+        //     }
+
+        // }
         return
     }
 }
