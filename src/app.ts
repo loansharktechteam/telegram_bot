@@ -4,18 +4,20 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 import mongoose from 'mongoose'
+
 import bodyParser from "body-parser";
 import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
 import workflowRouter from './router/workflowRouter';
+import externalApiRouter from './router/externalApiRouter';
 import subscriberInformationRouter from './router/subscriberInformationRouter'
 import discordRouter from './router/discordRouter'
 import { telegramBotService } from './services/telegramBotService'
-// import {
-//     checkTrigger,
-//     triggerLiquidationAlert,
-// } from './services/cronJobService'
+// import { PriceLogginService } from "./services/priceLogginService"
+// const priceLogginService = new PriceLogginService()
+import { ExternalApiService } from "./services/externalApiService"
+const externalApiService = new ExternalApiService()
 import {CronJobService} from './services/cronJobService'
 const cronJobService = new CronJobService()
 const app: Application = express()
@@ -38,6 +40,7 @@ const cred = {
 if (process.env.DATABASE_URL) {
     console.log(`${process.env.DATABASE_URL}`)
     mongoose.connect(`${process.env.DATABASE_URL}`)
+    // const AutoIncrement = AutoIncrementFactory(connect);
     const db = mongoose.connection
     console.log(`connecting database`)
     db.on('error', (error) => console.error(error))
@@ -61,6 +64,7 @@ app.use('/workflow', workflowRouter)
 app.use('/telegram', telegramRouter)
 app.use('/noitifcation', subscriberInformationRouter)
 app.use('/discord', discordRouter);
+app.use('/api',externalApiRouter)
 
 app.get('/testTriggerCronJob', cronJobService.triggerLiquidationAlert)
 app.get('/testScoreSystem', cronJobService.triggerScoreSystem)

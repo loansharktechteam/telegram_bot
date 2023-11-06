@@ -8,13 +8,19 @@ import { PriceLogging } from '../modal/priceLoggingModel'
 import { SubscriptionMarks } from '../modal/subscriptionMarksModel'
 
 import { bot } from '../services/telegramBotService'
+import { SequenceService } from '../services/sequenceService'
 
 export class PriceLogginService {
     constructor() { }
+    sequenceService = new SequenceService();
     addPriceLog = async (priceInformation: any) => {
         try {
+            let nextNumber = await this.sequenceService.getNextSequence("PRICE_LOGGIN")
+            priceInformation = {
+                ...priceInformation,
+                key: nextNumber
+            }
             const saveRespond = await PriceLogging.create(priceInformation);
-            console.log(saveRespond)
             return {
                 code: 0,
                 message: "success",
@@ -22,6 +28,7 @@ export class PriceLogginService {
             }
         }
         catch (e) {
+            console.error(`[addPriceLog error], ${e}`)
             return {
                 code: -1,
                 message: "fail",
@@ -32,6 +39,11 @@ export class PriceLogginService {
 
     addSubsctiptionMarks = async (subscriptionMark: any) => {
         try {
+            let nextNumber = await this.sequenceService.getNextSequence("SUBSCRIPTION_MARKS")
+            subscriptionMark = {
+                ...subscriptionMark,
+                key: nextNumber
+            }
             const saveRespond = await SubscriptionMarks.findOneAndUpdate({ address: subscriptionMark.address }, subscriptionMark, { upsert: true });
             return {
                 code: 0,
@@ -40,6 +52,7 @@ export class PriceLogginService {
             }
         }
         catch (e) {
+            console.error(`[addSubsctiptionMarks error] ${e}`)
             return {
                 code: -1,
                 message: "fail",

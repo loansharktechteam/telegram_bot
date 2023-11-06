@@ -65,7 +65,7 @@ export class CronJobService {
     alertHistoryService = new AlertHistoryService()
     priceLogginService = new PriceLogginService()
     scrollScanService = new ScrollScanService()
-    
+
     checkSubscriptedNoitifcation = async () => {
         console.log(`checkSubscriptedNoitifcation`)
         let body = { "alertSubscripte.telegram": true }
@@ -537,7 +537,7 @@ export class CronJobService {
         }
     }
 
-    getTokenHolderByContractAddress = async (address:string)=>{
+    getTokenHolderByContractAddress = async (address: string) => {
 
     }
 
@@ -550,28 +550,23 @@ export class CronJobService {
     startScoreSystem = async () => {
         const currentPriceObject = await this.getPriceFromRedSton()
         let priceLogRequestBody = {
-            key: "testkey",
             ceth: currentPriceObject.ethPriceInNumber,
             cusdc: currentPriceObject.usdcPriceInNumber,
             createDate: new Date(),
         }
+        // console.log(`priceLogRequestBody`,priceLogRequestBody)
         const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
-        let allHolderAddressArr:any[] = []
+        // console.log(`getAddPriceLogResult`,getAddPriceLogResult)
+        let allHolderAddressArr: any[] = []
         const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
-        console.log(`ethHolderAddress`, ethHolderAddress.length)
-
         const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
-        console.log(`usdcHolderAddress`, usdcHolderAddress.length)
-        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress,usdcHolderAddress)
-        console.log(`all address`, allHolderAddressArr.length)
+        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
         allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
-        console.log(`all address after filter`, allHolderAddressArr.length)
-
+        console.log(`allHolderAddressArr`,allHolderAddressArr.length)
         for (let count = 0; count < allHolderAddressArr.length; count++) {
             //calculate mark
             //insert record              
             let addSubsctiptionMarksRequestBody = {
-                key: "testkey",
                 address: allHolderAddressArr[count],
                 marks: "1.0",
                 createDate: new Date(),
@@ -579,6 +574,7 @@ export class CronJobService {
                 lastUpdateDate: new Date(),
                 lastUpdateBy: 'SYSTEM',
             }
+            console.log(`start insert marks`)
             const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
         }
 

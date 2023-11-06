@@ -1,14 +1,10 @@
 import { model, Schema, Model, Document, Types } from 'mongoose';
 
-interface IWorkflow extends Document {
-    _id: Types.ObjectId;
+interface IAlertHistory extends Document {
     key: String;
-    userAccountId: string;
-    workflow: object;
-    enabled: boolean;
-    createdAt: object;
-    updatedAt: object;
-    state: boolean;
+    address: String;
+    condition: String;
+    createDate: Date;
 }
 
 const AlertHistorySchema: Schema = new Schema({
@@ -20,4 +16,6 @@ const AlertHistorySchema: Schema = new Schema({
 });
 
 
-export const AlertHistory: Model<any> = model('alert_historys', AlertHistorySchema);
+export const AlertHistory = model<IAlertHistory>('alert_historys', AlertHistorySchema);
+
+// const User = model<IUser>('User', userSchema);

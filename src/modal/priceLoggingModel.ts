@@ -1,23 +1,19 @@
 import { model, Schema, Model, Document, Types } from 'mongoose';
+import { Sequences } from '../modal/sequencesModel'
 
-interface IWorkflow extends Document {
-    _id: Types.ObjectId;
-    key: String;
-    userAccountId: string;
-    workflow: object;
-    enabled: boolean;
-    createdAt: object;
-    updatedAt: object;
-    state: boolean;
+interface IPriceLogging extends Document {
+    key: Number;
+    ceth: String;
+    cusdc: String;
+    createDate: Date;
 }
 
 const PriceLoggingSchema: Schema = new Schema({
-    // _id: Types.ObjectId,
-    key: { type: String, require: true },
+    key: { type: Number, require: true },
     ceth: { type: String },
-    cusdc: {type: String},
-    createDate:{type: Date},
+    cusdc: { type: String },
+    createDate: { type: Date },
 });
 
 
-export const PriceLogging: Model<any> = model('price_logging', PriceLoggingSchema);
+export const PriceLogging = model<IPriceLogging>('price_logging', PriceLoggingSchema);

@@ -30,10 +30,7 @@ import { sendDiscordMessageByUsername } from '../services/discordService'
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
 import { AlertHistoryService } from '../services/alertHistoryService'
 import { PriceLogginService } from '../services/priceLogginService'
-const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
-const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
-// const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
-const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
+const BLOCKSCOUT_DOMAIN = process.env.BLOCKSCOUT_DOMAIN
 const div18zero = 1000000000000000000
 
 export class ScrollScanService {
@@ -48,7 +45,9 @@ export class ScrollScanService {
         //call api`
         while (page > 0) {
             try {
-                const response = await fetch(`https://sepolia-blockscout.scroll.io/api?module=token&action=getTokenHolders&contractaddress=${address}&page=${page}&offset=${offset}`);
+                let url = `${BLOCKSCOUT_DOMAIN}/api?module=token&action=getTokenHolders&contractaddress=${address}&page=${page}&offset=${offset}`
+                console.log(`getTokenHolderByContractAddress `,url)
+                const response = await fetch(url);
                 if (response.status === 200) {
                     const data: any = await response.json();
                     if ((data?.result?.length ?? 0) > 0) {
