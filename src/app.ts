@@ -4,18 +4,20 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 dotenv.config()
 import mongoose from 'mongoose'
+
 import bodyParser from "body-parser";
 import fs from 'fs';
 import https from 'https'
 import telegramRouter from './router/telegramRouter';
 import workflowRouter from './router/workflowRouter';
+import externalApiRouter from './router/externalApiRouter';
 import subscriberInformationRouter from './router/subscriberInformationRouter'
 import discordRouter from './router/discordRouter'
 import { telegramBotService } from './services/telegramBotService'
-// import {
-//     checkTrigger,
-//     triggerLiquidationAlert,
-// } from './services/cronJobService'
+// import { PriceLogginService } from "./services/priceLogginService"
+// const priceLogginService = new PriceLogginService()
+import { ExternalApiService } from "./services/externalApiService"
+const externalApiService = new ExternalApiService()
 import {CronJobService} from './services/cronJobService'
 const cronJobService = new CronJobService()
 const app: Application = express()
@@ -26,7 +28,7 @@ app.use(cors({
 }));
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-
+const sslCert = fs.readFileSync(`${__dirname}/B5A96CBA293C33D986D193CA56347609.txt`)
 const key = fs.readFileSync(`${__dirname}/private.key`)
 const cert = fs.readFileSync(`${__dirname}/certificate.crt`)
 
@@ -34,9 +36,11 @@ const cred = {
     key,
     cert
 }
+
 if (process.env.DATABASE_URL) {
     console.log(`${process.env.DATABASE_URL}`)
     mongoose.connect(`${process.env.DATABASE_URL}`)
+    // const AutoIncrement = AutoIncrementFactory(connect);
     const db = mongoose.connection
     console.log(`connecting database`)
     db.on('error', (error) => console.error(error))
@@ -48,19 +52,22 @@ app.get("/toto", (req: Request, res: Response) => {
     res.send("Hello toto")
 })
 
+/*
+this part for port forwading in ec2 to allow verify ssl cert
+*/
+app.get("/.well-known/pki-validation/B5A96CBA293C33D986D193CA56347609.txt", (req: Request, res: Response) => {
+    res.send(sslCert)
+})
 // app.use('telegram',tele)
 
 app.use('/workflow', workflowRouter)
 app.use('/telegram', telegramRouter)
 app.use('/noitifcation', subscriberInformationRouter)
 app.use('/discord', discordRouter);
+app.use('/api',externalApiRouter)
 
-// app.get('/testTriggerCronJob',checkTrigger)
 app.get('/testTriggerCronJob', cronJobService.triggerLiquidationAlert)
-
-// app.use('/email', emailRouter);
-// app.use('/discord', discordRouter);
-// app.use('/workflow', workflowRouter);
+app.get('/testScoreSystem', cronJobService.triggerScoreSystem)
 
 app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
@@ -75,7 +82,7 @@ telegramBotService()
 
 const job = new CronJob.CronJob("* * * * *", function () {
     console.log(`trigger cron job by bot`)
-    // cronJobService.startLiquidation();
+    cronJobService.startLiquidation();
 })
 
 job.start()

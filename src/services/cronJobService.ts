@@ -5,6 +5,9 @@ import { ethers, Wallet } from "ethers";
 import { formatBytes32String } from "ethers/lib/utils";
 import { Client, IntentsBitField } from 'discord.js';
 import redstone from "redstone-api";
+// import { useContractRead, useContractReads } from "wagmi";
+// import contracts from "../generated/deployedContracts";
+
 import usdcAbi from "../abi/usdc.json"
 import wethAbi from "../abi/weth.json"
 import comptrollerAbi from "../abi/Comptroller.json"
@@ -26,11 +29,16 @@ import { bot } from '../services/telegramBotService'
 import { sendDiscordMessageByUsername } from '../services/discordService'
 import { SubscriberInformation } from '../modal/subscriberInformationModal'
 import { AlertHistoryService } from '../services/alertHistoryService'
+import { PriceLogginService } from '../services/priceLogginService'
+import { ScrollScanService } from '../services/scrollScanService'
+import {
+    filterDuplicateElement
+} from '../util/generalFunction'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
-const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
+// const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
 const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
-
+const div18zero = 1000000000000000000
 // async function getChatIdByUsername(username:string){
 //     try{
 //         const result = await TelegramMapping.findOne({username:username});
@@ -55,6 +63,9 @@ export class CronJobService {
     }
 
     alertHistoryService = new AlertHistoryService()
+    priceLogginService = new PriceLogginService()
+    scrollScanService = new ScrollScanService()
+
     checkSubscriptedNoitifcation = async () => {
         console.log(`checkSubscriptedNoitifcation`)
         let body = { "alertSubscripte.telegram": true }
@@ -185,7 +196,6 @@ export class CronJobService {
         // let body = {condition:{$elemMatch:{condition:"abcd"}}}
         try {
             const saveRespond = await SubscriberInformation.find(body);
-            console.log(saveRespond)
             return {
                 code: 0,
                 message: "success",
@@ -234,31 +244,9 @@ export class CronJobService {
     }
 
     triggerLiquidationAlert = async (req: any, res: any) => {
-        // console.log(this)
         this.startLiquidation()
         res.status(200).json({ message: "OK" })
         return
-        // const result = await this.getAllBorrowLimitOverCondition()
-        // if (result.result.length > 0) {
-        //     //someone subscribe
-        //     for (let count = 0; count < result.result.length; count++) {
-        //         let eachSubscription = result.result[count]
-        //         // checkEachSubscribedCondition(result.result[count])
-        //         eachSubscription.condition.map(async (eachCondition: any) => {
-        //             if (eachCondition.condition === 'borrowLimitOver') {
-        //                 let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value)
-        //                 console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
-        //                 if (checkAlertNeedTriggerResult === true) {
-        //                     //if triggered alert send alert
-        //                     console.log(`trigger alert`)
-        //                     this.checkEachSubscribedCondition(eachSubscription)
-        //                 }
-        //             }
-        //         })
-        //     }
-        // }
-        // res.status(200).json({ message: "OK" })
-        // return
     }
 
     startLiquidation = async () => {
@@ -272,9 +260,11 @@ export class CronJobService {
                 // checkEachSubscribedCondition(result.result[count])
                 eachSubscription.condition.map(async (eachCondition: any) => {
                     if (eachCondition.condition === 'borrowLimitOver') {
-                       console.log(` eachSubscription.key`, eachSubscription.key)
+                        console.log(` eachSubscription.key`, eachSubscription.key)
+                        // let checkAlertNeedTriggerResult = true
                         let checkAlertNeedTriggerResult = await this.checkAlertNeedTrigger(eachSubscription.address, eachCondition.value, eachSubscription.key)
                         console.log(`checkAlertNeedTriggerResult`, checkAlertNeedTriggerResult)
+
                         if (checkAlertNeedTriggerResult === true) {
                             //if triggered alert send alert
                             console.log(`trigger alert`)
@@ -287,16 +277,16 @@ export class CronJobService {
         return
     }
 
-    checkAlertNeedTrigger = async (address: any, alertThreshold: any,workflowKey:any) => {
+    checkAlertNeedTrigger = async (address: any, alertThreshold: any, workflowKey: any) => {
 
-        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver',workflowKey)
-        console.log(pass24HoursHistory)
+        let pass24HoursHistory = await this.alertHistoryService.getAlertHistoryByCreateDateAndCondition(address, 'borrowLimitOver', workflowKey)
+        // console.log(pass24HoursHistory)
         pass24HoursHistory = pass24HoursHistory ? pass24HoursHistory : []
-        console.log(`pass24HoursHistory.length`,pass24HoursHistory.length)
+        console.log(`pass24HoursHistory.length`, pass24HoursHistory.length)
         if (pass24HoursHistory.length > 0) return false
 
 
-        const div18zero = 1000000000000000000
+
         // let liquidationAddressCheck = `0x24DE9902d6F49d6E4D5c8fe4B9749c2CB0204f43`
         let liquidationAddressCheck = address
 
@@ -347,31 +337,31 @@ export class CronJobService {
                 totalSupply: null,
                 value: null,
             },
-            {
-                address: CWETH_CONTRACT_ADDRESS, //cweth
-                abi: cwethAbi,
-                balance: null,
-                borrow: null,
-                borrowInNumber: 0,
-                borrowInUsdInNumber: 0,
-                borrowBalanceStored: null,
-                borrowCaps: null,
-                borrowRatePerBlock: null,
-                cash: null,
-                exchangeRate: null,
-                isMember: null,
-                markets: null,
-                price: null,
-                supply: null,
-                supplyRatePerBlock: null,
-                token: null,
-                tokenBorrowAPY: null,
-                tokenSupplyAPY: null,
-                totalBorrows: null,
-                totalBorrowsInNumber: null,
-                totalSupply: null,
-                value: null,
-            },
+            // {
+            //     address: CWETH_CONTRACT_ADDRESS, //cweth
+            //     abi: cwethAbi,
+            //     balance: null,
+            //     borrow: null,
+            //     borrowInNumber: 0,
+            //     borrowInUsdInNumber: 0,
+            //     borrowBalanceStored: null,
+            //     borrowCaps: null,
+            //     borrowRatePerBlock: null,
+            //     cash: null,
+            //     exchangeRate: null,
+            //     isMember: null,
+            //     markets: null,
+            //     price: null,
+            //     supply: null,
+            //     supplyRatePerBlock: null,
+            //     token: null,
+            //     tokenBorrowAPY: null,
+            //     tokenSupplyAPY: null,
+            //     totalBorrows: null,
+            //     totalBorrowsInNumber: null,
+            //     totalSupply: null,
+            //     value: null,
+            // },
             {
                 address: CUSDC_CONTRACT_ADDRESS, //cusdc
                 abi: cusdcAbi,
@@ -413,14 +403,12 @@ export class CronJobService {
         let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
         let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
 
-
-
-        const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+        // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+        const provider = new ethers.providers.JsonRpcProvider("https://1rpc.io/scroll/sepolia");
         const wallet = new ethers.Wallet("34fca74d424c5acd869a373b6c5907fa0f42e9def560054e09a9d3e27764b6e5", provider)
         const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
         const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
-
         const redstoneCacheLayerUrls = [
             "https://d33trozg86ya9x.cloudfront.net",
         ];
@@ -432,10 +420,7 @@ export class CronJobService {
         };
 
         const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
-        // console.log(`wrappedComptrollerContract`,await wrappedComptrollerContract)
-        // console.log(`wrappedComptrollerContract`, await wrappedComptrollerContract.getAllMarkets())
         let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
-        // console.log(allMarketAddress)
         let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
 
 
@@ -455,19 +440,19 @@ export class CronJobService {
                 console.log(martketContractsDetail[count].borrowInNumber)
                 console.log(martketContractsDetail[count].borrowInUsdInNumber)
             }
-            else if (eachContractDetail.address === CWETH_CONTRACT_ADDRESS) {
-                // // //weth
-                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                console.log(`borrowBalance`, Number(borrowBalance.toString()))
-                // console.log(`wethPriceInNumber`, wethPriceInNumber)
-                martketContractsDetail[count] = {
-                    ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()),
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * wethPriceInNumber
-                }
-                console.log(martketContractsDetail[count].borrowInNumber)
-                console.log(martketContractsDetail[count].borrowInUsdInNumber)
-            }
+            // else if (eachContractDetail.address === CWETH_CONTRACT_ADDRESS) {
+            //     // // //weth
+            //     let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+            //     console.log(`borrowBalance`, Number(borrowBalance.toString()))
+            //     // console.log(`wethPriceInNumber`, wethPriceInNumber)
+            //     martketContractsDetail[count] = {
+            //         ...eachContractDetail,
+            //         borrowInNumber: Number(borrowBalance.toString()),
+            //         borrowInUsdInNumber: Number(borrowBalance.toString()) * wethPriceInNumber
+            //     }
+            //     console.log(martketContractsDetail[count].borrowInNumber)
+            //     console.log(martketContractsDetail[count].borrowInUsdInNumber)
+            // }
             else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
                 // // //eth
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
@@ -530,5 +515,99 @@ export class CronJobService {
         } else {
             return false
         }
+    }
+
+    getPriceFromRedSton = async () => {
+        const usdcPrice = await redstone.getPrice("USDC");
+        //real usdc price usdcPrice.value
+        const ethPrice = await redstone.getPrice("ETH");
+        //real eth price ethPrice.value
+
+        const priceArray = new Map();
+        priceArray.set("USDC", ethers.utils.parseUnits(usdcPrice.value.toString()));
+        priceArray.set("WETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        priceArray.set("ETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        let usdcPriceInNumber = Number(priceArray.get('USDC').toString()) / div18zero
+        let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
+        let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
+
+        return {
+            usdcPriceInNumber,
+            ethPriceInNumber
+        }
+    }
+
+    getTokenHolderByContractAddress = async (address: string) => {
+
+    }
+
+    triggerScoreSystem = async (req: any, res: any) => {
+        this.startScoreSystem()
+        res.status(200).json({ message: "OK" })
+        return
+    }
+
+    startScoreSystem = async () => {
+        const currentPriceObject = await this.getPriceFromRedSton()
+        let priceLogRequestBody = {
+            ceth: currentPriceObject.ethPriceInNumber,
+            cusdc: currentPriceObject.usdcPriceInNumber,
+            createDate: new Date(),
+        }
+        // console.log(`priceLogRequestBody`,priceLogRequestBody)
+        const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
+        // console.log(`getAddPriceLogResult`,getAddPriceLogResult)
+        let allHolderAddressArr: any[] = []
+        const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
+        const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
+        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
+        allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
+        console.log(`allHolderAddressArr`,allHolderAddressArr.length)
+        for (let count = 0; count < allHolderAddressArr.length; count++) {
+            //calculate mark
+            //insert record              
+            let addSubsctiptionMarksRequestBody = {
+                address: allHolderAddressArr[count],
+                marks: "1.0",
+                createDate: new Date(),
+                createBy: 'SYSTEM',
+                lastUpdateDate: new Date(),
+                lastUpdateBy: 'SYSTEM',
+            }
+            console.log(`start insert marks`)
+            const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+        }
+
+
+
+        // const result = await this.getAllBorrowLimitOverCondition()
+        // if (result.result.length > 0) {
+        //     //someone subscribe
+        //     let activeSubscriptionList: any = []
+        //     for (let count = 0; count < result.result.length; count++) {
+        //         let eachSubscription = result.result[count]
+        //         if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
+        //             activeSubscriptionList.push(eachSubscription.address)
+        //         }
+        //     }
+
+        //     for (let count = 0; count < activeSubscriptionList.length; count++) {
+        //         activeSubscriptionList[count]
+        //         //calculate mark
+        //         //insert record              
+        //         let addSubsctiptionMarksRequestBody = {
+        //             key: "testkey",
+        //             address: activeSubscriptionList[count],
+        //             marks: "1.0",
+        //             createDate: new Date(),
+        //             createBy: 'SYSTEM',
+        //             lastUpdateDate: new Date(),
+        //             lastUpdateBy: 'SYSTEM',
+        //         }
+        //         const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+        //     }
+
+        // }
+        return
     }
 }
