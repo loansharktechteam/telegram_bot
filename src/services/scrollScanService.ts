@@ -46,7 +46,7 @@ export class ScrollScanService {
         while (page > 0) {
             try {
                 let url = `${BLOCKSCOUT_DOMAIN}/api?module=token&action=getTokenHolders&contractaddress=${address}&page=${page}&offset=${offset}`
-                console.log(`getTokenHolderByContractAddress `,url)
+                console.log(`getTokenHolderByContractAddress `, url)
                 const response = await fetch(url);
                 if (response.status === 200) {
                     const data: any = await response.json();

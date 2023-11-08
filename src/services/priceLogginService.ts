@@ -52,7 +52,7 @@ export class PriceLogginService {
             }
         }
         catch (e) {
-            console.error(`[addSubsctiptionMarks error] ${e}`)
+            // console.error(`[addSubsctiptionMarks error] ${e}`)
             return {
                 code: -1,
                 message: "fail",

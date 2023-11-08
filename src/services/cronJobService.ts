@@ -547,8 +547,8 @@ export class CronJobService {
         return
     }
 
-    calculateScore = async ()=>{
-        
+    calculateScore = async () => {
+
     }
 
     startScoreSystem = async () => {
@@ -566,10 +566,9 @@ export class CronJobService {
         const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
         allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
         allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
-        console.log(`allHolderAddressArr`,allHolderAddressArr.length)
         for (let count = 0; count < allHolderAddressArr.length; count++) {
             //calculate mark
-            
+
             //insert record              
             let addSubsctiptionMarksRequestBody = {
                 address: allHolderAddressArr[count],
@@ -579,7 +578,7 @@ export class CronJobService {
                 lastUpdateDate: new Date(),
                 lastUpdateBy: 'SYSTEM',
             }
-            console.log(`start insert marks`)
+            // console.log(`start insert marks`)
             const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
         }
 

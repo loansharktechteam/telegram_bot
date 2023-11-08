@@ -23,7 +23,7 @@ export class SequenceService {
             },
             { returnNewDocument: false }
         )
-        console.log(`saveRespond`, saveRespond);
+        // console.log(`saveRespond`, saveRespond);
         let result:any = saveRespond?.sequence ?? -2
         result++
         return result
