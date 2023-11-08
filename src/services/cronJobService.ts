@@ -547,6 +547,10 @@ export class CronJobService {
         return
     }
 
+    calculateScore = async ()=>{
+        
+    }
+
     startScoreSystem = async () => {
         const currentPriceObject = await this.getPriceFromRedSton()
         let priceLogRequestBody = {
@@ -565,6 +569,7 @@ export class CronJobService {
         console.log(`allHolderAddressArr`,allHolderAddressArr.length)
         for (let count = 0; count < allHolderAddressArr.length; count++) {
             //calculate mark
+            
             //insert record              
             let addSubsctiptionMarksRequestBody = {
                 address: allHolderAddressArr[count],
