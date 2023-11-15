@@ -38,6 +38,7 @@ const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
 // const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
 const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
+const SCROLL_NET = process.env.SCROLL_NET
 const div18zero = 1000000000000000000
 // async function getChatIdByUsername(username:string){
 //     try{
@@ -404,8 +405,10 @@ export class CronJobService {
         let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
 
         // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
-        const provider = new ethers.providers.JsonRpcProvider("https://1rpc.io/scroll/sepolia");
+        // const provider = new ethers.providers.JsonRpcProvider("https://1rpc.io/scroll/sepolia");
+        const provider = new ethers.providers.JsonRpcProvider(SCROLL_NET);
         const wallet = new ethers.Wallet("34fca74d424c5acd869a373b6c5907fa0f42e9def560054e09a9d3e27764b6e5", provider)
+        console.log(`wallet`)
         const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
         const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
@@ -547,8 +550,78 @@ export class CronJobService {
         return
     }
 
-    calculateScore = async () => {
+    calculateScore = async (address:any, wrappedComptrollerContract:any, martketContractsDetail:any, provider:any, wallet:any, usdcPriceInNumber:any, ethPriceInNumber:any) => {
+        let liquidationAddressCheck = address
+        let accountStatus = {
+            address: liquidationAddressCheck,
+            totalBorrowAmountInUsdInNumber: 0,
+            totalLimitedAmountInUsdInNumber: 0,
+            totalDepositAmountInUsdInNumber: 0,
+            currentPercentageLimit: 0,
+        }
+        let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
 
+
+        for (let count = 0; count < martketContractsDetail.length; count++) {
+            let eachContractDetail = martketContractsDetail[count]
+            const eachContract = new ethers.Contract(eachContractDetail?.address ?? '', eachContractDetail.abi, provider);
+            const eachContractWithSignerAA = eachContract.connect(wallet);
+            if (eachContractDetail.address === CUSDC_CONTRACT_ADDRESS) {
+                //usdc
+                let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+                martketContractsDetail[count] = {
+                    ...eachContractDetail,
+                    borrowInNumber: Number(borrowBalance.toString()),
+                    borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber,
+                    depositInNumber: Number(depositBalance.toString()),
+                    depositInUsdInNumber: Number(depositBalance.toString()) * usdcPriceInNumber,
+                }
+            }
+            else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
+                // // //eth
+                let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+                martketContractsDetail[count] = {
+                    ...eachContractDetail,
+                    borrowInNumber: Number(borrowBalance.toString()),
+                    borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber,
+                    depositInNumber: Number(depositBalance.toString()),
+                    depositInUsdInNumber: Number(depositBalance.toString()) * ethPriceInNumber,
+                }
+            }
+            // const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+        }
+
+        let accountLiquidityInNumber = 0
+        var allAccountLiquidity = await wrappedComptrollerContract.getAccountLiquidity(liquidationAddressCheck);
+        if (allAccountLiquidity[0]) {
+            let testaccountLiquidityInNumber = Number(allAccountLiquidity[0].toString())
+            console.log(`testaccountLiquidityInNumber`, testaccountLiquidityInNumber)
+        }
+        if (allAccountLiquidity[1]) {
+            accountLiquidityInNumber = Number(allAccountLiquidity[1].toString())
+            console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)
+        }
+        if (allAccountLiquidity[2]) {
+            let test3accountLiquidityInNumber = Number(allAccountLiquidity[2].toString())
+            console.log(`test3accountLiquidityInNumber`, test3accountLiquidityInNumber)
+        }
+
+        for (let count = 0; count < martketContractsDetail.length; count++) {
+            let eachContractDetail = martketContractsDetail[count]
+            console.log(`each assest in usd`, eachContractDetail.borrowInUsdInNumber)
+            accountStatus = {
+                ...accountStatus,
+                totalBorrowAmountInUsdInNumber: accountStatus.totalBorrowAmountInUsdInNumber + eachContractDetail.borrowInUsdInNumber,
+                totalDepositAmountInUsdInNumber: accountStatus.totalDepositAmountInUsdInNumber + eachContractDetail.depositInUsdInNumber
+            }
+        }
+        console.log(`totalBorrowAmountInUsdInNumber`, accountStatus.totalBorrowAmountInUsdInNumber)
+        console.log(`totalDepositAmountInUsdInNumber`, accountStatus.totalDepositAmountInUsdInNumber)
+        console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)   //this is real account liquidyt in usd  = limit
+        let mark = (accountStatus.totalDepositAmountInUsdInNumber *1 + accountStatus.totalBorrowAmountInUsdInNumber *1.5) / 1000
+        return mark
     }
 
     startScoreSystem = async () => {
@@ -566,20 +639,128 @@ export class CronJobService {
         const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
         allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
         allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
+
+
+
+        /*
+        get current market 
+        */
+        const comptrollerContractAddress = COMPTROLLER_CONTRACT_ADDRESS
+        const nameItem = ["cash",
+            "price",
+            "totalSupply",
+            "exchangeRate",
+            "totalBorrows",
+            "balance",
+            "supplyRatePerBlock",
+            "borrowBalanceStored",
+            "borrowRatePerBlock",
+            "markets",
+            "borrowCaps",
+            "isMember",]
+
+        let martketContractsDetail = [
+            {
+                address: CETH_CONTRACT_ADDRESS,  //ceth
+                abi: cethAbi,
+                balance: null,
+                borrow: null,
+                borrowInNumber: 0,
+                borrowInUsdInNumber: 0,
+                borrowBalanceStored: null,
+                borrowCaps: null,
+                borrowRatePerBlock: null,
+                cash: null,
+                exchangeRate: null,
+                isMember: null,
+                markets: null,
+                price: null,
+                supply: null,
+                supplyRatePerBlock: null,
+                token: null,
+                tokenBorrowAPY: null,
+                tokenSupplyAPY: null,
+                totalBorrows: null,
+                totalBorrowsInNumber: null,
+                totalSupply: null,
+                value: null,
+            },
+            {
+                address: CUSDC_CONTRACT_ADDRESS, //cusdc
+                abi: cusdcAbi,
+                balance: null,
+                borrow: null,
+                borrowInNumber: 0,
+                borrowInUsdInNumber: 0,
+                borrowBalanceStored: null,
+                borrowCaps: null,
+                borrowRatePerBlock: null,
+                cash: null,
+                exchangeRate: null,
+                isMember: null,
+                markets: null,
+                price: null,
+                supply: null,
+                supplyRatePerBlock: null,
+                token: null,
+                tokenBorrowAPY: null,
+                tokenSupplyAPY: null,
+                totalBorrows: null,
+                totalBorrowsInNumber: null,
+                totalSupply: null,
+                value: null,
+            },
+        ]
+
+
+
+        const usdcPrice = await redstone.getPrice("USDC");
+        const ethPrice = await redstone.getPrice("ETH");
+        const priceArray = new Map();
+        priceArray.set("USDC", ethers.utils.parseUnits(usdcPrice.value.toString()));
+        priceArray.set("WETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        priceArray.set("ETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+        let usdcPriceInNumber = Number(priceArray.get('USDC').toString()) / div18zero
+        let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
+        let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
+
+        // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+        const provider = new ethers.providers.JsonRpcProvider(SCROLL_NET);
+        const wallet = new ethers.Wallet("34fca74d424c5acd869a373b6c5907fa0f42e9def560054e09a9d3e27764b6e5", provider)
+        const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
+
+        const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
+        const redstoneCacheLayerUrls = [
+            "https://d33trozg86ya9x.cloudfront.net",
+        ];
+        const config = {
+            dataServiceId: "redstone-main-demo",
+            uniqueSignersCount: 1,
+            dataFeeds: ["USDC", "ETH"],
+            urls: redstoneCacheLayerUrls
+        };
+
+        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+        let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
+
+
         for (let count = 0; count < allHolderAddressArr.length; count++) {
             //calculate mark
 
+            let newScore = await this.calculateScore(allHolderAddressArr[count], wrappedComptrollerContract, martketContractsDetail, provider, wallet, usdcPriceInNumber, ethPriceInNumber)
+            console.log(`newScore`,newScore)
+            // let newScore = 1
             //insert record              
-            let addSubsctiptionMarksRequestBody = {
-                address: allHolderAddressArr[count],
-                marks: "1.0",
-                createDate: new Date(),
-                createBy: 'SYSTEM',
-                lastUpdateDate: new Date(),
-                lastUpdateBy: 'SYSTEM',
-            }
+            // let addSubsctiptionMarksRequestBody = {
+            //     address: allHolderAddressArr[count],
+            //     marks: "1.0",
+            //     createDate: new Date(),
+            //     createBy: 'SYSTEM',
+            //     lastUpdateDate: new Date(),
+            //     lastUpdateBy: 'SYSTEM',
+            // }
             // console.log(`start insert marks`)
-            const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+            const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(allHolderAddressArr[count], newScore)
         }
 
 

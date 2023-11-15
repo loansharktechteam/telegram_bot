@@ -23,22 +23,9 @@ export class SequenceService {
             },
             { returnNewDocument: false }
         )
-        // console.log(`saveRespond`, saveRespond);
         let result:any = saveRespond?.sequence ?? -2
         result++
         return result
-        // console.log(saveRespond)
-        // const saveRespond = await PriceLogging.findAndModify(priceInformation);
-
-        // var ret = db.counters.findAndModify(
-        //     {
-        //         query: { _id: name },
-        //         update: { $inc: { seq: 1 } },
-        //         new: true
-        //     }
-        // );
-
-        // return ret.seq;
     }
 }
 

@@ -15,7 +15,7 @@ const SubscriptionMarksSchema: Schema = new Schema({
     // _id: Types.ObjectId,
     key: { type: Number, require: true },
     address: { type: String },
-    marks: { type: String },
+    marks: { type: Number },
     createDate: { type: Date },
     createBy: { type: String },
     lastUpdateDate: { type: Date },

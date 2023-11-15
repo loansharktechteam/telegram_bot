@@ -37,14 +37,32 @@ export class PriceLogginService {
         }
     }
 
-    addSubsctiptionMarks = async (subscriptionMark: any) => {
+    // addSubsctiptionMarks = async (subscriptionMark: any) => {
+    addSubsctiptionMarks = async (address: string, additionalMark: any) => {
         try {
             let nextNumber = await this.sequenceService.getNextSequence("SUBSCRIPTION_MARKS")
-            subscriptionMark = {
-                ...subscriptionMark,
-                key: nextNumber
+            const originAddressMarks:any = await SubscriptionMarks.find({ address: address });
+            let subscriptionMark: any = {}
+            if((Object?.keys(originAddressMarks?.[0]??{})?.length??0) >0){
+                subscriptionMark={
+                    marks: (originAddressMarks[0]?.marks ?? 0) + additionalMark,
+                    lastUpdateDate: new Date(),
+                    lastUpdateBy: 'SYSTEM',
+                    address:address,
+                }
+            }else{
+                subscriptionMark={
+                    marks: additionalMark,
+                    key: nextNumber,
+                    createDate: new Date(),
+                    createBy: 'SYSTEM',
+                    lastUpdateDate: new Date(),
+                    lastUpdateBy: 'SYSTEM',
+                    address:address,
+                }
             }
-            const saveRespond = await SubscriptionMarks.findOneAndUpdate({ address: subscriptionMark.address }, subscriptionMark, { upsert: true });
+            // const saveRespond = await SubscriptionMarks.findOneAndUpdate({ address: subscriptionMark.address }, subscriptionMark, { upsert: true });
+            const saveRespond = await SubscriptionMarks.findOneAndUpdate({ address: address }, subscriptionMark, { upsert: true });
             return {
                 code: 0,
                 message: "success",
