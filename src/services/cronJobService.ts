@@ -34,11 +34,16 @@ import { ScrollScanService } from '../services/scrollScanService'
 import {
     filterDuplicateElement
 } from '../util/generalFunction'
+import {
+    RED_STONE_CONFIG_CONSTANT
+} from '../util/generalConstant'
 const COMPTROLLER_CONTRACT_ADDRESS = process.env.COMPTROLLER_CONTRACT_ADDRESS
 const CETH_CONTRACT_ADDRESS = process.env.CETH_CONTRACT_ADDRESS
 // const CWETH_CONTRACT_ADDRESS = process.env.CWETH_CONTRACT_ADDRESS
 const CUSDC_CONTRACT_ADDRESS = process.env.CUSDC_CONTRACT_ADDRESS
 const SCROLL_NET = process.env.SCROLL_NET
+const CONNECT_WALLET_PRIVATE_KEY = process.env.CONNECT_WALLET_PRIVATE_KEY
+// const RED_STONE_CACHE_LAYER = process.env.RED_STONE_CACHE_LAYER
 const div18zero = 1000000000000000000
 // async function getChatIdByUsername(username:string){
 //     try{
@@ -412,17 +417,7 @@ export class CronJobService {
         const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
         const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
-        const redstoneCacheLayerUrls = [
-            "https://d33trozg86ya9x.cloudfront.net",
-        ];
-        const config = {
-            dataServiceId: "redstone-main-demo",
-            uniqueSignersCount: 1,
-            dataFeeds: ["USDC", "ETH"],
-            urls: redstoneCacheLayerUrls
-        };
-
-        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(RED_STONE_CONFIG_CONSTANT);
         let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
         let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
 
@@ -474,6 +469,7 @@ export class CronJobService {
 
         // console.log(`martketContractsDetail`, martketContractsDetail)
         let accountLiquidityInNumber = 0
+        console.log(`getAccountLiquidity`,liquidationAddressCheck)
         var allAccountLiquidity = await wrappedComptrollerContract.getAccountLiquidity(liquidationAddressCheck);
         if (allAccountLiquidity[0]) {
             let testaccountLiquidityInNumber = Number(allAccountLiquidity[0].toString())
@@ -550,7 +546,7 @@ export class CronJobService {
         return
     }
 
-    calculateScore = async (address:any, wrappedComptrollerContract:any, martketContractsDetail:any, provider:any, wallet:any, usdcPriceInNumber:any, ethPriceInNumber:any) => {
+    calculateScore = async (address: any, wrappedComptrollerContract: any, martketContractsDetail: any, provider: any, wallet: any, usdcPriceInNumber: any, ethPriceInNumber: any) => {
         let liquidationAddressCheck = address
         let accountStatus = {
             address: liquidationAddressCheck,
@@ -569,25 +565,31 @@ export class CronJobService {
             if (eachContractDetail.address === CUSDC_CONTRACT_ADDRESS) {
                 //usdc
                 let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
+                exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
                 martketContractsDetail[count] = {
                     ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()),
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber,
-                    depositInNumber: Number(depositBalance.toString()),
-                    depositInUsdInNumber: Number(depositBalance.toString()) * usdcPriceInNumber,
+                    borrowInNumber: Number(borrowBalance.toString()) / div18zero,
+                    borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber / div18zero,
+                    depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
+                    depositInUsdInNumber: Number(depositBalance.toString()) * usdcPriceInNumber * exchangeRateStore / div18zero,
                 }
             }
             else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
                 // // //eth
                 let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                console.log(`exchangeRateCurrent`)
+                let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
+                console.log(`exchangeRateCurrent done`, exchangeRateStore.toString())
+                exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
                 let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
                 martketContractsDetail[count] = {
                     ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()),
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber,
-                    depositInNumber: Number(depositBalance.toString()),
-                    depositInUsdInNumber: Number(depositBalance.toString()) * ethPriceInNumber,
+                    borrowInNumber: Number(borrowBalance.toString()) / div18zero,
+                    borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber / div18zero,
+                    depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
+                    depositInUsdInNumber: Number(depositBalance.toString()) * ethPriceInNumber * exchangeRateStore / div18zero,
                 }
             }
             // const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
@@ -620,7 +622,8 @@ export class CronJobService {
         console.log(`totalBorrowAmountInUsdInNumber`, accountStatus.totalBorrowAmountInUsdInNumber)
         console.log(`totalDepositAmountInUsdInNumber`, accountStatus.totalDepositAmountInUsdInNumber)
         console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)   //this is real account liquidyt in usd  = limit
-        let mark = (accountStatus.totalDepositAmountInUsdInNumber *1 + accountStatus.totalBorrowAmountInUsdInNumber *1.5) / 1000
+        let mark = (accountStatus.totalDepositAmountInUsdInNumber * 1 + accountStatus.totalBorrowAmountInUsdInNumber * 1.5) / 1000
+        console.log(`mark`, mark)
         return mark
     }
 
@@ -726,21 +729,11 @@ export class CronJobService {
 
         // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
         const provider = new ethers.providers.JsonRpcProvider(SCROLL_NET);
-        const wallet = new ethers.Wallet("34fca74d424c5acd869a373b6c5907fa0f42e9def560054e09a9d3e27764b6e5", provider)
+        const wallet = new ethers.Wallet(CONNECT_WALLET_PRIVATE_KEY?CONNECT_WALLET_PRIVATE_KEY:'', provider)
         const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
         const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
-        const redstoneCacheLayerUrls = [
-            "https://d33trozg86ya9x.cloudfront.net",
-        ];
-        const config = {
-            dataServiceId: "redstone-main-demo",
-            uniqueSignersCount: 1,
-            dataFeeds: ["USDC", "ETH"],
-            urls: redstoneCacheLayerUrls
-        };
-
-        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(RED_STONE_CONFIG_CONSTANT);
         let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
 
 
@@ -748,7 +741,7 @@ export class CronJobService {
             //calculate mark
 
             let newScore = await this.calculateScore(allHolderAddressArr[count], wrappedComptrollerContract, martketContractsDetail, provider, wallet, usdcPriceInNumber, ethPriceInNumber)
-            console.log(`newScore`,newScore)
+            console.log(`newScore`, newScore)
             // let newScore = 1
             //insert record              
             // let addSubsctiptionMarksRequestBody = {

@@ -6,3 +6,29 @@ DISCORD_TOKEN=''
 DISCORD_CLIENT_ID=''
 #server id
 DISCORD_GUILD_ID='' 
+
+
+
+
+DATABASE_URL='mongodb+srv://loanshark:loanshark@loanshark.pg2xytf.mongodb.net/loanshark'
+GOOGLE_EMAIL='tyehcwc402004@gmail.com'
+GOOGLE_PASS='yxlapbkmqgivludd'
+DISCORD_TOKEN='MTEwNzMxMDkwNjYyNDQ1NDc1Nw.GKA_AN.kRyDlhNQP-WM_LVV-5pqodwJ5Suk3pxpup7fVs'
+
+#MTEwNzMxMDkwNjYyNDQ1NDc1Nw.GsL9Fa._MJJntyTBVmKsySqd-O9PobJFH_nw362XExGOc
+#application id
+DISCORD_CLIENT_ID='1107310906624454757'
+#server id
+DISCORD_GUILD_ID='1105161982417567856' 
+TELEGRAM_TOKEN='5967762690:AAGsFlhX8j65LhZPUVcnhxoRu8C9uhlhRw0'
+COMPTROLLER_CONTRACT_ADDRESS='0x75BaFFD109B71b0854B54C2f597A81757232CD32'
+CETH_CONTRACT_ADDRESS='0x346FDc684800F733dD2d5B8f4AfBEA4805F84d5A'
+# CWETH_CONTRACT_ADDRESS='0x75F9d174e2BF5031b69Ec92241813aDF4583Ed26'
+CUSDC_CONTRACT_ADDRESS='0xC770E58CDaB256458db6d53DCD6aE2703A574478'
+# BLOCKSCOUT_DOMAIN='https://blockscout.scroll.io'
+# scroll sepolia testnet https://sepolia-blockscout.scroll.io
+BLOCKSCOUT_DOMAIN='https://sepolia-blockscout.scroll.io'
+#testnet
+SCROLL_NET='https://scroll-sepolia.drpc.org'
+#mainnet
+# SCROLL_NET='https://1rpc.io/scroll'
