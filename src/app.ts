@@ -85,9 +85,8 @@ const job = new CronJob.CronJob("* * * * *", function () {
     // cronJobService.startLiquidation();
 })
 
-const jobScoreSystem = new CronJob.CronJob("0 23 * * *", function () {
-    console.log(`triggerScoreSystem cron job by bot`)
+const jobScoreSystem = new CronJob.CronJob("0 * * * *", function () {
+    console.log(`triggerScoreSystem cron job by bot ${new Date()}`)
     cronJobService.startScoreSystem();
 })
-job.start()
-
+jobScoreSystem.start()
