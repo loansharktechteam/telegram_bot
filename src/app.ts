@@ -29,8 +29,8 @@ app.use(cors({
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 const sslCert = fs.readFileSync(`${__dirname}/B5A96CBA293C33D986D193CA56347609.txt`)
-const key = fs.readFileSync(`${__dirname}/private.key`)
-const cert = fs.readFileSync(`${__dirname}/certificate.crt`)
+const key = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/privkey.pem`)
+const cert = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/fullchain.pem`)
 
 const cred = {
     key,
@@ -89,4 +89,4 @@ const jobScoreSystem = new CronJob.CronJob("0 * * * *", function () {
     console.log(`triggerScoreSystem cron job by bot ${new Date()}`)
     cronJobService.startScoreSystem();
 })
-jobScoreSystem.start()
+// jobScoreSystem.start()
