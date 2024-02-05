@@ -145,6 +145,7 @@ export class PriceLogginService {
                         // remove all record
                 await this.removeSubsctiptionMarks();
                 SubscriptionHaveMarks.insertMany(insertList)
+                console.log(`finish`)
             }
            return {
                 code: 0,
