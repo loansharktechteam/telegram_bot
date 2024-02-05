@@ -68,6 +68,7 @@ app.use('/api',externalApiRouter)
 
 app.get('/testTriggerCronJob', cronJobService.triggerLiquidationAlert)
 app.get('/testScoreSystem', cronJobService.triggerScoreSystem)
+app.get("/startCheckHolderByAddress", cronJobService.triggerStartCheckHolderByAddress)
 
 app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
@@ -89,4 +90,10 @@ const jobScoreSystem = new CronJob.CronJob("0 23 * * *", function () {
     console.log(`triggerScoreSystem cron job by bot ${new Date()}`)
     cronJobService.startScoreSystem();
 })
-jobScoreSystem.start()
+// jobScoreSystem.start()
+
+const jobCheckHolder = new CronJob.CronJob("0 * * * *", function () {
+    console.log(`triggerScoreSystem cron job by bot ${new Date()}`)
+    cronJobService.startCheckHolderByAddress();
+})
+jobCheckHolder.start()

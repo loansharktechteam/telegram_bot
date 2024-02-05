@@ -6,7 +6,7 @@ import moment from 'moment'
 import { AlertHistory } from '../modal/alertHistoryModel'
 import { PriceLogging } from '../modal/priceLoggingModel'
 import { SubscriptionMarks } from '../modal/subscriptionMarksModel'
-
+import {SubscriptionHaveMarks } from '../modal/subscriptionHaveMarksModel'
 import { bot } from '../services/telegramBotService'
 import { SequenceService } from '../services/sequenceService'
 
@@ -79,9 +79,128 @@ export class PriceLogginService {
         }
     }
 
+    addSubscriptionHaveMarks = async (address: string, additionalMark: any) => {
+        try {
+            let nextNumber = await this.sequenceService.getNextSequence("SUBSCRIPTION_HAVE_MARKS")
+            const originAddressMarks:any = await SubscriptionHaveMarks.find({ address: address });
+            let subscriptionMark: any = {}
+            if((Object?.keys(originAddressMarks?.[0]??{})?.length??0) >0){
+                subscriptionMark={
+                    marks: (originAddressMarks[0]?.marks ?? 0) + additionalMark,
+                    lastUpdateDate: new Date(),
+                    lastUpdateBy: 'SYSTEM',
+                    address:address,
+                }
+            }else{
+                subscriptionMark={
+                    marks: additionalMark,
+                    key: nextNumber,
+                    createDate: new Date(),
+                    createBy: 'SYSTEM',
+                    lastUpdateDate: new Date(),
+                    lastUpdateBy: 'SYSTEM',
+                    address:address,
+                }
+            }
+            // const saveRespond = await SubscriptionMarks.findOneAndUpdate({ address: subscriptionMark.address }, subscriptionMark, { upsert: true });
+            SubscriptionHaveMarks.insertMany
+            const saveRespond = await SubscriptionHaveMarks.findOneAndUpdate({ address: address }, subscriptionMark, { upsert: true });
+            return {
+                code: 0,
+                message: "success",
+                result: saveRespond
+            }
+        }
+        catch (e) {
+            // console.error(`[addSubsctiptionMarks error] ${e}`)
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
+
+    addSubscriptionHaveMarksInsertMany = async (addressList: any) => {
+        console.log(`addressList `);
+        try {
+
+            if(addressList.length>0){
+                let insertList:any =[]
+                for(let count=0;count<addressList.length;count ++){
+                    let nextNumber = await this.sequenceService.getNextSequence("SUBSCRIPTION_HAVE_MARKS")
+                    let tempObj = {
+                        marks: 1,
+                        key: nextNumber,
+                        createDate: new Date(),
+                        createBy: 'SYSTEM',
+                        lastUpdateDate: new Date(),
+                        lastUpdateBy: 'SYSTEM',
+                        address:addressList[count],
+                    }
+                    // console.log(`tempObj`,tempObj)
+                    insertList.push(tempObj)
+                }
+                console.log(`finish loop address`, insertList[0])
+                SubscriptionHaveMarks.insertMany(insertList)
+            }
+           return {
+                code: 0,
+                message: "success",
+                result: {}
+            }
+        }
+        catch (e) {
+            console.error(`[addSubsctiptionMarks error] ${e}`)
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
+
+    removeSubsctiptionMarks = async () => {
+        try {
+            const saveRespond = await SubscriptionHaveMarks.deleteMany()
+            return {
+                code: 0,
+                message: "success",
+                result: saveRespond
+            }
+        }
+        catch (e) {
+            // console.error(`[addSubsctiptionMarks error] ${e}`)
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
+
     getScoreByAddress = async (address: string) => {
         try {
             const saveRespond = await SubscriptionMarks.find({ address: address });
+            return {
+                code: 0,
+                message: "success",
+                result: saveRespond
+            }
+        }
+        catch (e) {
+            return {
+                code: -1,
+                message: "fail",
+                result: {}
+            }
+        }
+    }
+
+    
+    checkHasDepositByAddress = async (address: string) => {
+        try {
+            const saveRespond = await SubscriptionHaveMarks.find({ address: address });
             return {
                 code: 0,
                 message: "success",

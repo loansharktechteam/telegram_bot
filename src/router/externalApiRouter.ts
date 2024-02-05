@@ -33,7 +33,7 @@ router.get('/checkHasDeposit', async function (req: Request, res: Response) {
     }
  
     let allAllLowerLetter = address.toLowerCase()
-    let getScoreByAddressRespond:any = await priceLogginService.getScoreByAddress(allAllLowerLetter)
+    let getScoreByAddressRespond:any = await priceLogginService.checkHasDepositByAddress(allAllLowerLetter)
     console.log(`getScoreByAddressRespond`, getScoreByAddressRespond)
     if (getScoreByAddressRespond?.result?.[0]?.marks ?? 0 > 0) {
         result.data = true

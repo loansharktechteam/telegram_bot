@@ -801,165 +801,188 @@ export class CronJobService {
 
 
     
-    startCalculateScoreByAddress = async () => {
-        const currentPriceObject = await this.getPriceFromRedSton()
-        let priceLogRequestBody = {
-            ceth: currentPriceObject.ethPriceInNumber,
-            cusdc: currentPriceObject.usdcPriceInNumber,
-            createDate: new Date(),
-        }
-        // console.log(`priceLogRequestBody`,priceLogRequestBody)
-        const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
-        // console.log(`getAddPriceLogResult`,getAddPriceLogResult)
-        let allHolderAddressArr: any[] = []
-        const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
-        const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
-        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
-        allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
+    // startCalculateScoreByAddress = async () => {
+    //     const currentPriceObject = await this.getPriceFromRedSton()
+    //     let priceLogRequestBody = {
+    //         ceth: currentPriceObject.ethPriceInNumber,
+    //         cusdc: currentPriceObject.usdcPriceInNumber,
+    //         createDate: new Date(),
+    //     }
+    //     // console.log(`priceLogRequestBody`,priceLogRequestBody)
+    //     const getAddPriceLogResult = await this.priceLogginService.addPriceLog(priceLogRequestBody)
+    //     // console.log(`getAddPriceLogResult`,getAddPriceLogResult)
+    //     let allHolderAddressArr: any[] = []
+    //     const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
+    //     const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
+    //     allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress, usdcHolderAddress)
+    //     allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
 
 
 
-        /*
-        get current market 
-        */
-        const comptrollerContractAddress = COMPTROLLER_CONTRACT_ADDRESS
-        const nameItem = ["cash",
-            "price",
-            "totalSupply",
-            "exchangeRate",
-            "totalBorrows",
-            "balance",
-            "supplyRatePerBlock",
-            "borrowBalanceStored",
-            "borrowRatePerBlock",
-            "markets",
-            "borrowCaps",
-            "isMember",]
+    //     /*
+    //     get current market 
+    //     */
+    //     const comptrollerContractAddress = COMPTROLLER_CONTRACT_ADDRESS
+    //     const nameItem = ["cash",
+    //         "price",
+    //         "totalSupply",
+    //         "exchangeRate",
+    //         "totalBorrows",
+    //         "balance",
+    //         "supplyRatePerBlock",
+    //         "borrowBalanceStored",
+    //         "borrowRatePerBlock",
+    //         "markets",
+    //         "borrowCaps",
+    //         "isMember",]
 
-        let martketContractsDetail = [
-            {
-                address: CETH_CONTRACT_ADDRESS,  //ceth
-                abi: cethAbi,
-                balance: null,
-                borrow: null,
-                borrowInNumber: 0,
-                borrowInUsdInNumber: 0,
-                borrowBalanceStored: null,
-                borrowCaps: null,
-                borrowRatePerBlock: null,
-                cash: null,
-                exchangeRate: null,
-                isMember: null,
-                markets: null,
-                price: null,
-                supply: null,
-                supplyRatePerBlock: null,
-                token: null,
-                tokenBorrowAPY: null,
-                tokenSupplyAPY: null,
-                totalBorrows: null,
-                totalBorrowsInNumber: null,
-                totalSupply: null,
-                value: null,
-            },
-            {
-                address: CUSDC_CONTRACT_ADDRESS, //cusdc
-                abi: cusdcAbi,
-                balance: null,
-                borrow: null,
-                borrowInNumber: 0,
-                borrowInUsdInNumber: 0,
-                borrowBalanceStored: null,
-                borrowCaps: null,
-                borrowRatePerBlock: null,
-                cash: null,
-                exchangeRate: null,
-                isMember: null,
-                markets: null,
-                price: null,
-                supply: null,
-                supplyRatePerBlock: null,
-                token: null,
-                tokenBorrowAPY: null,
-                tokenSupplyAPY: null,
-                totalBorrows: null,
-                totalBorrowsInNumber: null,
-                totalSupply: null,
-                value: null,
-            },
-        ]
-
-
-
-        const usdcPrice = await redstone.getPrice("USDC");
-        const ethPrice = await redstone.getPrice("ETH");
-        const priceArray = new Map();
-        priceArray.set("USDC", ethers.utils.parseUnits(usdcPrice.value.toString()));
-        priceArray.set("WETH", ethers.utils.parseUnits(ethPrice.value.toString()));
-        priceArray.set("ETH", ethers.utils.parseUnits(ethPrice.value.toString()));
-        let usdcPriceInNumber = Number(priceArray.get('USDC').toString()) / div18zero
-        let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
-        let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
-
-        // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
-        const provider = new ethers.providers.JsonRpcProvider(SCROLL_NET);
-        const wallet = new ethers.Wallet(CONNECT_WALLET_PRIVATE_KEY?CONNECT_WALLET_PRIVATE_KEY:'', provider)
-        const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
-
-        const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
-        const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(RED_STONE_CONFIG_CONSTANT);
-        let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
-
-
-        for (let count = 0; count < allHolderAddressArr.length; count++) {
-            //calculate mark
-
-            let newScore = await this.calculateScore(allHolderAddressArr[count], wrappedComptrollerContract, martketContractsDetail, provider, wallet, usdcPriceInNumber, ethPriceInNumber)
-            console.log(`newScore`, newScore)
-            // let newScore = 1
-            //insert record              
-            // let addSubsctiptionMarksRequestBody = {
-            //     address: allHolderAddressArr[count],
-            //     marks: "1.0",
-            //     createDate: new Date(),
-            //     createBy: 'SYSTEM',
-            //     lastUpdateDate: new Date(),
-            //     lastUpdateBy: 'SYSTEM',
-            // }
-            // console.log(`start insert marks`)
-            const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(allHolderAddressArr[count], newScore)
-        }
+    //     let martketContractsDetail = [
+    //         {
+    //             address: CETH_CONTRACT_ADDRESS,  //ceth
+    //             abi: cethAbi,
+    //             balance: null,
+    //             borrow: null,
+    //             borrowInNumber: 0,
+    //             borrowInUsdInNumber: 0,
+    //             borrowBalanceStored: null,
+    //             borrowCaps: null,
+    //             borrowRatePerBlock: null,
+    //             cash: null,
+    //             exchangeRate: null,
+    //             isMember: null,
+    //             markets: null,
+    //             price: null,
+    //             supply: null,
+    //             supplyRatePerBlock: null,
+    //             token: null,
+    //             tokenBorrowAPY: null,
+    //             tokenSupplyAPY: null,
+    //             totalBorrows: null,
+    //             totalBorrowsInNumber: null,
+    //             totalSupply: null,
+    //             value: null,
+    //         },
+    //         {
+    //             address: CUSDC_CONTRACT_ADDRESS, //cusdc
+    //             abi: cusdcAbi,
+    //             balance: null,
+    //             borrow: null,
+    //             borrowInNumber: 0,
+    //             borrowInUsdInNumber: 0,
+    //             borrowBalanceStored: null,
+    //             borrowCaps: null,
+    //             borrowRatePerBlock: null,
+    //             cash: null,
+    //             exchangeRate: null,
+    //             isMember: null,
+    //             markets: null,
+    //             price: null,
+    //             supply: null,
+    //             supplyRatePerBlock: null,
+    //             token: null,
+    //             tokenBorrowAPY: null,
+    //             tokenSupplyAPY: null,
+    //             totalBorrows: null,
+    //             totalBorrowsInNumber: null,
+    //             totalSupply: null,
+    //             value: null,
+    //         },
+    //     ]
 
 
 
-        // const result = await this.getAllBorrowLimitOverCondition()
-        // if (result.result.length > 0) {
-        //     //someone subscribe
-        //     let activeSubscriptionList: any = []
-        //     for (let count = 0; count < result.result.length; count++) {
-        //         let eachSubscription = result.result[count]
-        //         if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
-        //             activeSubscriptionList.push(eachSubscription.address)
-        //         }
-        //     }
+    //     const usdcPrice = await redstone.getPrice("USDC");
+    //     const ethPrice = await redstone.getPrice("ETH");
+    //     const priceArray = new Map();
+    //     priceArray.set("USDC", ethers.utils.parseUnits(usdcPrice.value.toString()));
+    //     priceArray.set("WETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+    //     priceArray.set("ETH", ethers.utils.parseUnits(ethPrice.value.toString()));
+    //     let usdcPriceInNumber = Number(priceArray.get('USDC').toString()) / div18zero
+    //     let wethPriceInNumber = Number(priceArray.get('WETH').toString()) / div18zero
+    //     let ethPriceInNumber = Number(priceArray.get('ETH').toString()) / div18zero
 
-        //     for (let count = 0; count < activeSubscriptionList.length; count++) {
-        //         activeSubscriptionList[count]
-        //         //calculate mark
-        //         //insert record              
-        //         let addSubsctiptionMarksRequestBody = {
-        //             key: "testkey",
-        //             address: activeSubscriptionList[count],
-        //             marks: "1.0",
-        //             createDate: new Date(),
-        //             createBy: 'SYSTEM',
-        //             lastUpdateDate: new Date(),
-        //             lastUpdateBy: 'SYSTEM',
-        //         }
-        //         const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
-        //     }
+    //     // const provider = new ethers.providers.JsonRpcProvider("https://alpha-rpc.scroll.io/l2");
+    //     const provider = new ethers.providers.JsonRpcProvider(SCROLL_NET);
+    //     const wallet = new ethers.Wallet(CONNECT_WALLET_PRIVATE_KEY?CONNECT_WALLET_PRIVATE_KEY:'', provider)
+    //     const comptrollerContract = new ethers.Contract(comptrollerContractAddress ? comptrollerContractAddress : '', comptrollerAbi, provider);
 
-        // }
+    //     const comptrollerContractWithSignerAA = comptrollerContract.connect(wallet);
+    //     const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(RED_STONE_CONFIG_CONSTANT);
+    //     let allMarketAddress = await wrappedComptrollerContract.getAllMarkets()
+
+
+    //     for (let count = 0; count < allHolderAddressArr.length; count++) {
+    //         //calculate mark
+
+    //         let newScore = await this.calculateScore(allHolderAddressArr[count], wrappedComptrollerContract, martketContractsDetail, provider, wallet, usdcPriceInNumber, ethPriceInNumber)
+    //         console.log(`newScore`, newScore)
+    //         // let newScore = 1
+    //         //insert record              
+    //         // let addSubsctiptionMarksRequestBody = {
+    //         //     address: allHolderAddressArr[count],
+    //         //     marks: "1.0",
+    //         //     createDate: new Date(),
+    //         //     createBy: 'SYSTEM',
+    //         //     lastUpdateDate: new Date(),
+    //         //     lastUpdateBy: 'SYSTEM',
+    //         // }
+    //         // console.log(`start insert marks`)
+    //         const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(allHolderAddressArr[count], newScore)
+    //     }
+
+
+
+    //     // const result = await this.getAllBorrowLimitOverCondition()
+    //     // if (result.result.length > 0) {
+    //     //     //someone subscribe
+    //     //     let activeSubscriptionList: any = []
+    //     //     for (let count = 0; count < result.result.length; count++) {
+    //     //         let eachSubscription = result.result[count]
+    //     //         if (activeSubscriptionList.indexOf(eachSubscription?.address ?? '') === -1) {
+    //     //             activeSubscriptionList.push(eachSubscription.address)
+    //     //         }
+    //     //     }
+
+    //     //     for (let count = 0; count < activeSubscriptionList.length; count++) {
+    //     //         activeSubscriptionList[count]
+    //     //         //calculate mark
+    //     //         //insert record              
+    //     //         let addSubsctiptionMarksRequestBody = {
+    //     //             key: "testkey",
+    //     //             address: activeSubscriptionList[count],
+    //     //             marks: "1.0",
+    //     //             createDate: new Date(),
+    //     //             createBy: 'SYSTEM',
+    //     //             lastUpdateDate: new Date(),
+    //     //             lastUpdateBy: 'SYSTEM',
+    //     //         }
+    //     //         const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(addSubsctiptionMarksRequestBody)
+    //     //     }
+
+    //     // }
+    //     return
+    // }
+
+    triggerStartCheckHolderByAddress = async (req: any, res: any) => {
+        // this.startScoreSystem()
+        // let address = CETH_CONTRACT_ADDRESS
+        this.startCheckHolderByAddress()
+        res.status(200).json({ message: "OK" })
         return
     }
+
+    startCheckHolderByAddress = async () => {
+        console.log(`startCheckHolderByAddress`)
+        let allHolderAddressArr: any[] = []
+        const ethHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CETH_CONTRACT_ADDRESS ? CETH_CONTRACT_ADDRESS : '')
+        // const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
+        allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress)
+        allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
+
+        // remove all record
+        await this.priceLogginService.removeSubsctiptionMarks();
+        const getAddPriceLogResult = await this.priceLogginService.addSubscriptionHaveMarksInsertMany(allHolderAddressArr)
+        return
+    }
+
 }
