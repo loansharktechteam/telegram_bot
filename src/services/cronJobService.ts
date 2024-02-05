@@ -547,6 +547,7 @@ export class CronJobService {
     }
 
     calculateScore = async (address: any, wrappedComptrollerContract: any, martketContractsDetail: any, provider: any, wallet: any, usdcPriceInNumber: any, ethPriceInNumber: any) => {
+        let mark =0
         let liquidationAddressCheck = address
         let accountStatus = {
             address: liquidationAddressCheck,
@@ -555,74 +556,78 @@ export class CronJobService {
             totalDepositAmountInUsdInNumber: 0,
             currentPercentageLimit: 0,
         }
-        let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
+        try{
+            let assestIn = await wrappedComptrollerContract.getAssetsIn(liquidationAddressCheck)
 
 
-        for (let count = 0; count < martketContractsDetail.length; count++) {
-            let eachContractDetail = martketContractsDetail[count]
-            const eachContract = new ethers.Contract(eachContractDetail?.address ?? '', eachContractDetail.abi, provider);
-            const eachContractWithSignerAA = eachContract.connect(wallet);
-            if (eachContractDetail.address === CUSDC_CONTRACT_ADDRESS) {
-                //usdc
-                let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
-                let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
-                exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
-                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                martketContractsDetail[count] = {
-                    ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()) / div18zero,
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber / div18zero,
-                    depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
-                    depositInUsdInNumber: Number(depositBalance.toString()) * usdcPriceInNumber * exchangeRateStore / div18zero,
+            for (let count = 0; count < martketContractsDetail.length; count++) {
+                let eachContractDetail = martketContractsDetail[count]
+                const eachContract = new ethers.Contract(eachContractDetail?.address ?? '', eachContractDetail.abi, provider);
+                const eachContractWithSignerAA = eachContract.connect(wallet);
+                if (eachContractDetail.address === CUSDC_CONTRACT_ADDRESS) {
+                    //usdc
+                    let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                    let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
+                    exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
+                    let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+                    martketContractsDetail[count] = {
+                        ...eachContractDetail,
+                        borrowInNumber: Number(borrowBalance.toString()) / div18zero,
+                        borrowInUsdInNumber: Number(borrowBalance.toString()) * usdcPriceInNumber / div18zero,
+                        depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
+                        depositInUsdInNumber: Number(depositBalance.toString()) * usdcPriceInNumber * exchangeRateStore / div18zero,
+                    }
+                }
+                else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
+                    // // //eth
+                    let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
+                    console.log(`exchangeRateCurrent`)
+                    let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
+                    console.log(`exchangeRateCurrent done`, exchangeRateStore.toString())
+                    exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
+                    let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
+                    martketContractsDetail[count] = {
+                        ...eachContractDetail,
+                        borrowInNumber: Number(borrowBalance.toString()) / div18zero,
+                        borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber / div18zero,
+                        depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
+                        depositInUsdInNumber: Number(depositBalance.toString()) * ethPriceInNumber * exchangeRateStore / div18zero,
+                    }
+                }
+                // const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+            }
+    
+            let accountLiquidityInNumber = 0
+            var allAccountLiquidity = await wrappedComptrollerContract.getAccountLiquidity(liquidationAddressCheck);
+            if (allAccountLiquidity[0]) {
+                let testaccountLiquidityInNumber = Number(allAccountLiquidity[0].toString())
+                console.log(`testaccountLiquidityInNumber`, testaccountLiquidityInNumber)
+            }
+            if (allAccountLiquidity[1]) {
+                accountLiquidityInNumber = Number(allAccountLiquidity[1].toString())
+                console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)
+            }
+            if (allAccountLiquidity[2]) {
+                let test3accountLiquidityInNumber = Number(allAccountLiquidity[2].toString())
+                console.log(`test3accountLiquidityInNumber`, test3accountLiquidityInNumber)
+            }
+    
+            for (let count = 0; count < martketContractsDetail.length; count++) {
+                let eachContractDetail = martketContractsDetail[count]
+                console.log(`each assest in usd`, eachContractDetail.borrowInUsdInNumber)
+                accountStatus = {
+                    ...accountStatus,
+                    totalBorrowAmountInUsdInNumber: accountStatus.totalBorrowAmountInUsdInNumber + eachContractDetail.borrowInUsdInNumber,
+                    totalDepositAmountInUsdInNumber: accountStatus.totalDepositAmountInUsdInNumber + eachContractDetail.depositInUsdInNumber
                 }
             }
-            else if (eachContractDetail.address === CETH_CONTRACT_ADDRESS) {
-                // // //eth
-                let depositBalance = await eachContractWithSignerAA.balanceOf(liquidationAddressCheck)
-                console.log(`exchangeRateCurrent`)
-                let exchangeRateStore = await eachContractWithSignerAA.exchangeRateStored()
-                console.log(`exchangeRateCurrent done`, exchangeRateStore.toString())
-                exchangeRateStore = Number(exchangeRateStore.toString()) / div18zero
-                let borrowBalance = await eachContractWithSignerAA.borrowBalanceStored(liquidationAddressCheck)
-                martketContractsDetail[count] = {
-                    ...eachContractDetail,
-                    borrowInNumber: Number(borrowBalance.toString()) / div18zero,
-                    borrowInUsdInNumber: Number(borrowBalance.toString()) * ethPriceInNumber / div18zero,
-                    depositInNumber: Number(depositBalance.toString()) * exchangeRateStore / div18zero,
-                    depositInUsdInNumber: Number(depositBalance.toString()) * ethPriceInNumber * exchangeRateStore / div18zero,
-                }
-            }
-            // const wrappedComptrollerContract = WrapperBuilder.wrap(comptrollerContractWithSignerAA).usingDataService(config);
+            console.log(`totalBorrowAmountInUsdInNumber`, accountStatus.totalBorrowAmountInUsdInNumber)
+            console.log(`totalDepositAmountInUsdInNumber`, accountStatus.totalDepositAmountInUsdInNumber)
+            console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)   //this is real account liquidyt in usd  = limit
+            mark = (accountStatus.totalDepositAmountInUsdInNumber * 1 + accountStatus.totalBorrowAmountInUsdInNumber * 1.5) / 1000
+        }catch(e){
+            console.error(`calculateScore ${e}`)
         }
-
-        let accountLiquidityInNumber = 0
-        var allAccountLiquidity = await wrappedComptrollerContract.getAccountLiquidity(liquidationAddressCheck);
-        if (allAccountLiquidity[0]) {
-            let testaccountLiquidityInNumber = Number(allAccountLiquidity[0].toString())
-            console.log(`testaccountLiquidityInNumber`, testaccountLiquidityInNumber)
-        }
-        if (allAccountLiquidity[1]) {
-            accountLiquidityInNumber = Number(allAccountLiquidity[1].toString())
-            console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)
-        }
-        if (allAccountLiquidity[2]) {
-            let test3accountLiquidityInNumber = Number(allAccountLiquidity[2].toString())
-            console.log(`test3accountLiquidityInNumber`, test3accountLiquidityInNumber)
-        }
-
-        for (let count = 0; count < martketContractsDetail.length; count++) {
-            let eachContractDetail = martketContractsDetail[count]
-            console.log(`each assest in usd`, eachContractDetail.borrowInUsdInNumber)
-            accountStatus = {
-                ...accountStatus,
-                totalBorrowAmountInUsdInNumber: accountStatus.totalBorrowAmountInUsdInNumber + eachContractDetail.borrowInUsdInNumber,
-                totalDepositAmountInUsdInNumber: accountStatus.totalDepositAmountInUsdInNumber + eachContractDetail.depositInUsdInNumber
-            }
-        }
-        console.log(`totalBorrowAmountInUsdInNumber`, accountStatus.totalBorrowAmountInUsdInNumber)
-        console.log(`totalDepositAmountInUsdInNumber`, accountStatus.totalDepositAmountInUsdInNumber)
-        console.log(`accountLiquidityInNumber`, accountLiquidityInNumber)   //this is real account liquidyt in usd  = limit
-        let mark = (accountStatus.totalDepositAmountInUsdInNumber * 1 + accountStatus.totalBorrowAmountInUsdInNumber * 1.5) / 1000
         console.log(`mark`, mark)
         return mark
     }
@@ -738,6 +743,7 @@ export class CronJobService {
 
 
         for (let count = 0; count < allHolderAddressArr.length; count++) {
+            try{
             //calculate mark
             console.log(`looping holder address {}`,allHolderAddressArr[count]);
             let newScore = await this.calculateScore(allHolderAddressArr[count], wrappedComptrollerContract, martketContractsDetail, provider, wallet, usdcPriceInNumber, ethPriceInNumber)
@@ -754,6 +760,10 @@ export class CronJobService {
             // }
             // console.log(`start insert marks`)
             const getAddPriceLogResult = await this.priceLogginService.addSubsctiptionMarks(allHolderAddressArr[count], newScore)
+            }catch(e){
+                console.error(`error in address ${allHolderAddressArr[count]}`,e)
+            }
+
         }
 
 
