@@ -142,6 +142,8 @@ export class PriceLogginService {
                     insertList.push(tempObj)
                 }
                 console.log(`finish loop address`, insertList[0])
+                        // remove all record
+                await this.removeSubsctiptionMarks();
                 SubscriptionHaveMarks.insertMany(insertList)
             }
            return {

@@ -978,9 +978,6 @@ export class CronJobService {
         // const usdcHolderAddress = await this.scrollScanService.getTokenHolderByContractAddress(CUSDC_CONTRACT_ADDRESS ? CUSDC_CONTRACT_ADDRESS : '')
         allHolderAddressArr = allHolderAddressArr.concat(ethHolderAddress)
         allHolderAddressArr = filterDuplicateElement(allHolderAddressArr)
-
-        // remove all record
-        await this.priceLogginService.removeSubsctiptionMarks();
         const getAddPriceLogResult = await this.priceLogginService.addSubscriptionHaveMarksInsertMany(allHolderAddressArr)
         return
     }

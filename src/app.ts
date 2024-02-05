@@ -29,13 +29,13 @@ app.use(cors({
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 const sslCert = fs.readFileSync(`${__dirname}/B5A96CBA293C33D986D193CA56347609.txt`)
-const key = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/privkey.pem`)
-const cert = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/fullchain.pem`)
+// const key = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/privkey.pem`)
+// const cert = fs.readFileSync(`/etc/letsencrypt/live/api.loanshark.tech/fullchain.pem`)
 
-const cred = {
-    key,
-    cert
-}
+// const cred = {
+//     key,
+//     cert
+// }
 
 if (process.env.DATABASE_URL) {
     console.log(`${process.env.DATABASE_URL}`)
@@ -74,8 +74,8 @@ app.listen(port, function () {
     console.log(`App is listening on port ${port} !`)
 })
 
-const httpsServer = https.createServer(cred, app)
-httpsServer.listen(httpsPort)
+// const httpsServer = https.createServer(cred, app)
+// httpsServer.listen(httpsPort)
 console.log(`hn porttps App is listening ot ${httpsPort} !`)
 
 telegramBotService()
