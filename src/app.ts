@@ -89,4 +89,4 @@ const jobScoreSystem = new CronJob.CronJob("0 * * * *", function () {
     console.log(`triggerScoreSystem cron job by bot ${new Date()}`)
     cronJobService.startScoreSystem();
 })
-jobScoreSystem.start()
+// jobScoreSystem.start()
