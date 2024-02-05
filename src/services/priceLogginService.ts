@@ -122,7 +122,7 @@ export class PriceLogginService {
     }
 
     addSubscriptionHaveMarksInsertMany = async (addressList: any) => {
-        console.log(`addressList `);
+        console.log(`addressList`,addressList?.length??0);
         try {
 
             if(addressList.length>0){
